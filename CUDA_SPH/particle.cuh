@@ -9,23 +9,23 @@ class Particle
 {
 public:
 
-	float* pos; //Position radius-vector
+	float pos[3]; //Position radius-vector
 
-	float* vel; //Velosity vector
-	float* ax; //Axeleration vector
+	float vel[3]; //Velosity vector
+	float ax[3]; //Acceleration vector
 
-	float* mass; //Mass and radius
+	float mass; //Mass and radius
 	//float energy;
 
-	float* density;
-	float* pressure;
+	float density;
+	float pressure;
 
-	float* h; //Smooth radius
-	float* gamma;
-	float* A; //Const dep on env
+	float h; //Smooth radius
+	float gamma;
+	float A; //Const dep on env
 
-	Particle();
-	__host__ void malloc();
+	Particle() {};
+	void malloc();
 
 
 
@@ -33,17 +33,17 @@ public:
 	//=========SET FUNCTIONS=========
 
 	//Will set mass
-	__host__ void set_mass();
+	void set_mass(float);
 
 	//Will set (x, y, z) coordinates
-	__host__ void set_pos(float, float, float);
+	void set_pos(float, float, float);
 	//Will set q_i coordinate (q, i)
-	__host__ void set_pos_i(float, int);
+	void set_pos_i(float, int);
 
 	//Will set (v_x, v_y, v_z) velocities
-	__host__ void set_vel(float, float, float);
+	void set_vel(float, float, float);
 	//Will set v_i coordinate (v, i)
-	__host__ void set_vel_i(float, int);
+	void set_vel_i(float, int);
 
 
 
@@ -60,3 +60,13 @@ public:
 
 };
 
+class ParticleAllocator : Particle
+{
+public:
+	Particle* d_this;
+	ParticleAllocator() {};
+	ParticleAllocator(Particle*);
+};
+
+//Must be called after creatin an array of particles to send them to GPU
+void allocate_particles(Particle*, size_t);
