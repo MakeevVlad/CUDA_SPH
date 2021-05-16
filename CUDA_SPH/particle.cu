@@ -1,6 +1,28 @@
 #include "particle.cuh"
 
 
+
+Particle::Particle()
+{
+	mass = 1;
+	density = 1;
+	pressure = 1;
+	h = 1;
+	gamma = 1;
+	A = 1;
+	this->set_pos(0, 0, 0);
+	this->set_vel(0, 0, 0);
+	this->set_ax(0, 0, 0);
+};
+
+void Particle::allocate()
+{
+	
+	cudaMalloc((void**)&d_this, sizeof(Particle));
+	cudaMemcpy(d_this, this, sizeof(Particle), cudaMemcpyHostToDevice);
+}
+
+
 void Particle::set_mass(float _mass)
 {
 	mass = _mass;
@@ -28,13 +50,35 @@ void Particle::set_vel_i(float q, int i)
 	vel[i] = q;
 }
 
-
-
-
-
-
-ParticleAllocator::ParticleAllocator(Particle* p)
+void Particle::set_ax(float x, float y, float z)
 {
-	cudaMalloc((void**)&d_this, sizeof(Particle));
-	cudaMemcpy(d_this, &p, sizeof(Particle), cudaMemcpyHostToDevice);
+	ax[0] = x;
+	ax[1] = y;
+	ax[2] = z;
 }
+
+float Particle::get_pos_i(int i)
+{
+	cudaMemcpy(pos + i, d_this->pos + i, sizeof(float), cudaMemcpyDeviceToHost);
+	return pos[i];
+}
+
+Particle* Particle::device()
+{
+	return d_this;
+}
+
+
+Particle* device_particles_array(Particle* ps, size_t n)
+{
+	Particle* d_ps;
+
+	cudaMalloc((void**)&d_ps, n * sizeof(Particle));
+	cudaMemcpy(d_ps, ps, n * sizeof(Particle), cudaMemcpyHostToDevice);
+	for (size_t i = 0; i < n; ++i)
+		cudaMemcpy(d_ps + i, ps + i, sizeof(Particle), cudaMemcpyHostToDevice);
+
+	return d_ps;
+}
+
+

@@ -7,8 +7,10 @@
 
 class Particle
 {
+private:
+	Particle* d_this;
 public:
-
+	
 	float pos[3]; //Position radius-vector
 
 	float vel[3]; //Velosity vector
@@ -24,10 +26,8 @@ public:
 	float gamma;
 	float A; //Const dep on env
 
-	Particle() {};
-	void malloc();
-
-
+	Particle();
+	void allocate();
 
 
 	//=========SET FUNCTIONS=========
@@ -45,28 +45,24 @@ public:
 	//Will set v_i coordinate (v, i)
 	void set_vel_i(float, int);
 
+	void set_ax(float, float, float);
 
 
 	//=========GET FUNCTIONS=========
 
 	//Will fetch mass
-	__host__ void get_mass();
+	float get_mass();
 
 	//Will fetch q_i coordinate (q, i)
-	__host__ float get_pos_i(int);
+	float get_pos_i(int);
 
 	//Will fetch v_i coordinate (v, i)
-	__host__ float get_vel_i(int);
+	float get_vel_i(int);
+
+	Particle* device();
 
 };
 
-class ParticleAllocator : Particle
-{
-public:
-	Particle* d_this;
-	ParticleAllocator() {};
-	ParticleAllocator(Particle*);
-};
 
 //Must be called after creatin an array of particles to send them to GPU
-void allocate_particles(Particle*, size_t);
+Particle* device_particles_array(Particle*, size_t);
