@@ -17,7 +17,6 @@ Particle::Particle()
 
 void Particle::allocate()
 {
-	
 	cudaMalloc((void**)&d_this, sizeof(Particle));
 	cudaMemcpy(d_this, this, sizeof(Particle), cudaMemcpyHostToDevice);
 }

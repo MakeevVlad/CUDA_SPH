@@ -28,3 +28,6 @@ __device__ void refresh(Particle*, Kernel&, Neighbour&);
 //rotor and divergence of velocity's field (-||-)
 __device__ float  divVel(size_t, Particle*, Kernel&);
 __device__ float3	rotVel(size_t, Particle*, Kernel&);
+
+
+__device__ float scalar_prod(float*, float*);

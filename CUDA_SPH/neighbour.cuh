@@ -4,22 +4,34 @@
 #include "particle.cuh"
 class Neighbour
 {
+private:
+	Neighbour* d_this;
 public:
-	size_t* web;
-	size_t size;
+	//linearized n*n matrix. Must not be used on host!
+	size_t* neighbour;
+	//Must not be used on host!
+	size_t* nei_numbers;
 
+	size_t n;
+
+	//__device__ Neighbour(size_t);
 	Neighbour(size_t);
+	Neighbour() {};
 
-	
+	Neighbour* device()
+	{
+		return d_this;
+	}
 
-	__device__ void unary_init(Particle&);
+	//Returns the number of neighbours for n-th particle
+	__device__ size_t NeigboursMumber(size_t);
 
-	//Returns vector with neighbours' numbers
-	__device__ int* operator()(size_t n);
-	__device__ int* operator()(Particle&);
+	//Returns ptr to array with neighbours' numbers
+	__device__ size_t* getNeighbours(size_t);
+
 
 };
 
-__global__ void init(Particle*, Kernel*);
+__global__ void initNeighbour(Particle*, Neighbour);
 
 __device__ bool nei(Particle*, Particle*);
