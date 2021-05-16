@@ -4,7 +4,7 @@
 
 #include "particle.cuh"
 #include "neighbour.cuh"
-
+#include "sph.cuh"
 __device__ void eiler_scheme(Particle*, Kernel&, double, size_t);
 
 // particle's axeleration, dv/dt 

@@ -24,7 +24,7 @@ public:
 	}
 
 	//Returns the number of neighbours for n-th particle
-	__device__ size_t NeigboursMumber(size_t);
+	__device__ size_t NeigboursNumber(size_t);
 
 	//Returns ptr to array with neighbours' numbers
 	__device__ size_t* getNeighbours(size_t);

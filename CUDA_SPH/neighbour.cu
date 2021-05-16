@@ -23,7 +23,7 @@ Neighbour::Neighbour(size_t _n)
 	cudaMemcpy(d_this, this, sizeof(Neighbour), cudaMemcpyHostToDevice);
 }
 
-__device__ size_t Neighbour::NeigboursMumber(size_t i)
+__device__ size_t Neighbour::NeigboursNumber(size_t i)
 {
 	return nei_numbers[i];
 }
@@ -37,4 +37,3 @@ __global__ void initNeighbour(Particle* pts, Neighbour* nei)
 {
 	return;
 }
-
