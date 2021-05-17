@@ -9,6 +9,15 @@
 
 using index_t = std::size_t;
 
+
+class Material {
+ private:
+  float density;
+ public:
+  Material(float dens) : density(dens) {};
+};
+
+
 class Point {
  private:
   std::vector<real_t> x;
@@ -30,6 +39,16 @@ class Triangle {
   index_t& operator[](int i);
 };
 
+class Tetrahedra {
+ private:
+  std::vector<index_t> points;
+  index_t material;
+ public:
+  Tetrahedra();
+  Tetrahedra(index_t p1, index_t p2, index_t p3, index_t p4, index_t material);
+  index_t& operator[](int i);
+  index_t get_material();
+};
 
 class SurfaceMesh {
  private:
@@ -46,6 +65,17 @@ class SurfaceMesh {
   index_t get_triangles_count();
   void get_triangle_as_array(real_t** triangle, index_t id);
   void get_all_triangles(real_t*** triangles_array, index_t count);
+};
+
+class VolumeMesh {
+ private:
+  std::vector<Point> pts;
+  std::vector<Tetrahedra> tetrs;
+  std::vector<Material> mats;
+ public:
+  VolumeMesh();
+  void construct_from_file(std::string fmesh, std::string fmat);
+  // TODO : generate_particles
 };
 
 #endif

@@ -49,6 +49,24 @@ index_t& Triangle::operator[](int i) {
 };
 
 
+// Tetrahedra
+Tetrahedra::Tetrahedra() : 
+    points{index_t(), index_t(), index_t(), index_t()}, 
+    material(index_t()) {};
+
+Tetrahedra::Tetrahedra(index_t p1, index_t p2, index_t p3, 
+                       index_t p4, index_t material) : 
+    points{p1, p2, p3, p4}, material(material) {};
+
+index_t& Tetrahedra::operator[](int i) {
+  return points[i];
+};
+
+index_t Tetrahedra::get_material() {
+  return material;
+};
+
+
 // SurfaceMesh
 SurfaceMesh::SurfaceMesh() = default;
 
@@ -107,5 +125,12 @@ void SurfaceMesh::get_all_triangles(real_t*** trarr, index_t N) {
   };
 };
 
+
+// VolumeMesh
+VolumeMesh::VolumeMesh() = default;
+
+void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
+  // TODO : read from .msh file
+};
 
 #endif
