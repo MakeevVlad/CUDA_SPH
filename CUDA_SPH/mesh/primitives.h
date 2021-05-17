@@ -13,8 +13,11 @@ using index_t = std::size_t;
 class Material {
  private:
   float density;
+  std::string name;
+  int tag;
  public:
-  Material(float dens) : density(dens) {};
+  Material(std::string name, int tag) : density(0), name(name), tag(tag) {};
+  void set_parametres(float dens) { density = dens; };
 };
 
 
@@ -47,7 +50,7 @@ class Tetrahedra {
   Tetrahedra();
   Tetrahedra(index_t p1, index_t p2, index_t p3, index_t p4, index_t material);
   index_t& operator[](int i);
-  index_t get_material();
+  index_t get_material_id();
 };
 
 class SurfaceMesh {

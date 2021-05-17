@@ -8,6 +8,7 @@
 #include <string>
 #include <fstream>
 #include <limits>
+#include <unordered_map>
 
 
 // Utils
@@ -20,6 +21,19 @@ std::string get_file_extension(std::string fname) {
   };
 };
 
+void skip_to_tag(std::istream& in, std::string tag) {
+  std::string line;
+  while((line != tag) || !in.eof()) {
+    std::getline(in, line);
+  };
+};
+
+void skip_lines(std::istream& in, int n) {
+  std::string line;
+  for(int i = 0; i < n; ++i) {
+    std::getline(in, line);
+  };
+};
 
 // Point
 Point::Point() : x{std::vector<real_t>(3)} {};
@@ -62,7 +76,7 @@ index_t& Tetrahedra::operator[](int i) {
   return points[i];
 };
 
-index_t Tetrahedra::get_material() {
+index_t Tetrahedra::get_material_id() {
   return material;
 };
 
@@ -130,7 +144,101 @@ void SurfaceMesh::get_all_triangles(real_t*** trarr, index_t N) {
 VolumeMesh::VolumeMesh() = default;
 
 void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
-  // TODO : read from .msh file
+  std::string ext = get_file_extension(fmesh);
+  if(ext == "msh") {
+    std::ifstream f_in(fmesh);
+    if(!f_in.is_open()) {
+      std::cout << "[ERROR]: File \"" << fmesh << "\" not found\n";
+      throw "File not found";
+    };
+    std::ifstream mat_in(fmat);
+    if(!mat_in.is_open()) {
+      std::cout << "[ERROR]: File \"" << fmat << "\" not found\n";
+      throw "File not found";
+    };
+
+    // Materiall read
+    skip_to_tag(f_in, "$PhyscalNames");
+    int ph_ts_n;
+    f_in >> ph_ts_n;
+    std::unordered_map<int, index_t> mat_map;
+    for(int i = 0; i < ph_ts_n; ++i) {
+      int dim, ph_tag;
+      std::string name;
+      f_in >> dim >> ph_tag >> name;
+      if(dim == 3) {
+        mats.push_back(Material(name, ph_tag));
+        mat_map[ph_tag] = mats.size() - 1;
+      };
+    };
+    // TODO : read material props from file
+
+    // Entities read
+    skip_to_tag(f_in, "$Entities");
+    int d0, d1, d2, d3;
+    f_in >> d0 >> d1 >> d2 >> d3;
+    skip_lines(f_in, d0 + d1 + d2);
+    std::unordered_map<int, int> entities;
+    for(int i = 0; i < d3; ++i) {
+      int tag, phsn, ntophsn;
+      f_in >> tag;
+      // ignore next 6 floats
+      f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+      f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+      f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+      f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+      f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+      f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+      f_in >> phsn >> ntophsn;
+      if(phsn < 1) {
+        std::cout << "[ERROR]: No material provided for entity" <<
+            " with tag " << tag << '\n';
+        throw "No material";
+      };
+      if(phsn > 1) {
+        std::cout << "[WARNING]: More than one material provided" <<
+            " for entity with tag  " << tag << 
+            ". The first material given will be used\n";
+      };
+      entities[tag] = mat_map[ph_ts_n];
+    };
+
+    // Node reading
+    skip_to_tag(f_in, "$Nodes");
+    int ebn, ptsn;
+    f_in >> ebn >> ptsn;
+    pts.reserve(ptsn);
+    f_in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::unordered_map<int, int> nodes;
+    int abs_n = 0;
+    for(int e = 0; e < ebn; ++e) {
+      int d, t, p, nn;
+      f_in >> d >> t >> p >> nn;
+      if(d == 3) {
+        for(int i = 0; i < nn; ++i) {
+          int nid;
+          f_in >> nid;
+          nodes[nid] = i + abs_n;
+        };
+        for(int i = 0; i < nn; ++i) {
+          real_t x,y,z;
+          f_in >> x >> y >> z;
+          pts.push_back(Point(x, y, z));
+        };
+        abs_n += nn;
+      } else {
+        skip_lines(f_in, nn*2);
+      };
+    };
+
+    // Tetrahedra(entities) reading
+    // TODO
+
+
+  } else {
+    std::cout << "[ERROR]: Wrong file format(" << ext <<
+          ") for volume mesh providen\n";
+  };
 };
 
 #endif
