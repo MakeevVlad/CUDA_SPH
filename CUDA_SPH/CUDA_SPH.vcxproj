@@ -77,6 +77,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="cuda_vector_math.cu" />
     <CudaCompile Include="kernel.cu" />
     <CudaCompile Include="neighbour.cu" />
     <CudaCompile Include="particle.cu" />
@@ -84,6 +85,8 @@
     <CudaCompile Include="utils.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cuda_vector_math.cuh" />
+    <ClInclude Include="info.cuh" />
     <ClInclude Include="neighbour.cuh" />
     <ClInclude Include="particle.cuh" />
     <ClInclude Include="sph.cuh" />

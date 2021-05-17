@@ -1,5 +1,3 @@
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
 #include <iostream>
 #include "neighbour.cuh"
 
@@ -35,5 +33,13 @@ __device__ size_t* Neighbour::getNeighbours(size_t i)
 
 __global__ void initNeighbour(Particle* pts, Neighbour* nei)
 {
-	return;
+	size_t i = blockDim.x;
+	size_t j = threadIdx.x;
+	if (i >= nei->n || j >= nei->n || j < i + 1)
+		return;
+	if ((pts[i].pos - pts[j].pos).abssquared() < 4 * pts[i].h * pts[i].h)
+	{
+		nei->neighbour[i * nei->n + nei->nei_numbers[i]] = j;
+		++nei->nei_numbers[i];
+	}
 }

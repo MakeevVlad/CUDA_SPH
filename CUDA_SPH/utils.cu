@@ -1,5 +1,3 @@
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"Particle* particle
 #include "utils.cuh"
 
 __device__ float scalar_prod(float* a, float* b)
@@ -7,46 +5,37 @@ __device__ float scalar_prod(float* a, float* b)
 	return a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
 }
 
-
-float dens(size_t n, Particle* particle, Kernel& kernel)
+void axelerations(Particle* particle, Kernel* kernel, Neighbour* nei)
 {
-	float dens = 0;
-	for (Particle& p : particle)
-		dens += p.get_mass() * kernel.W(particle[n].pos, p.pos, particle[n].h);
-
-	return dens;
+	size_t i = blockIdx.x;
+	ax(i, particle, *kernel, *nei);
 }
-float dens(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
+void step(Particle* particle, Kernel* kernel, Neighbour* nei, float dt)
 {
-	float dens = 0;
-#pragma omp parallel for reduction(+:dens)
-	for (size_t i : neighbour(n))
-		dens += particle[i].get_mass() * kernel.W(particle[n].pos, particle[i].pos, particle[n].h);
+	size_t i = blockIdx.x;
+	size_t j = threadIdx.x;
+	if (j < 3)
+	{
+		particle[i].vel[j] += particle[i].ax[j] * dt;
+		particle[i].pos[j] += particle[i].vel[j] * dt;
+	}
+}
 
-	return dens;
+void dens(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
+{
+	size_t i = threadIdx.x;
+	if (i >= neighbour.nei_numbers[n])
+		return;
+	size_t j = neighbour.neighbour[i];
+	atomicAdd(&particle[n].density, particle[j].get_mass() * kernel.W(particle[n].pos, particle[j].pos, particle[n].h));
+
 }
 float press(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
 {
 	return particle[n].A * pow(particle[n].density, particle[n].gamma);
 }
 
-void adapt_h(size_t n, float dt, Particle* particle, Kernel& kernel)
-{
-	particle[n].h = particle[n].h * (1 + divVel(n, particle, kernel) / kernel.D);
-}
-
-float divVel(size_t n, Particle* particle, Kernel& kernel)
-{
-	float divV = 0;
-	for (Particle& p : particle)
-		if (nei(particle[n], p))
-			divV += (p.vel - particle[n].vel) *
-			kernel.gradW(particle[n].pos, p.pos, particle[n].h) *
-			p.get_mass();
-
-	return divV / dens(n, particle, kernel);
-
-}
+/*
 float divVel(size_t n, Particle* particle, Kernel& kernel, Neighbour& nei)
 {
 	float divV = 0;
@@ -59,17 +48,7 @@ float divVel(size_t n, Particle* particle, Kernel& kernel, Neighbour& nei)
 
 }
 
-vec3 rotVel(size_t n, float dt, Particle* particle, Kernel& kernel)
-{
-	vec3 rotV = 0;
-	for (Particle& p : particle)
-		if (nei(particle[n], p))
-			rotV += (p.vel - particle[n].vel) /
-			kernel.gradW(particle[n].pos, p.pos, particle[n].h) *
-			p.get_mass();
-
-	return rotV / dens(n, particle, kernel);
-}vec3 rotVel(size_t n, float dt, Particle* particle, Kernel& kernel, Neighbour& nei)
+vec3 rotVel(size_t n, float dt, Particle* particle, Kernel& kernel, Neighbour& nei)
 {
 	vec3 rotV = 0;
 	for (size_t i : nei(n))
@@ -78,49 +57,41 @@ vec3 rotVel(size_t n, float dt, Particle* particle, Kernel& kernel)
 		particle[i].get_mass();
 
 	return rotV / dens(n, particle, kernel);
-}
+}*/
 
-void refresh(Particle* particle, Kernel& kernel, Neighbour& neighbour)
+void initParticles(Particle* particle, Kernel* kernel, Neighbour* neighbour)
 {
-	for (size_t i = 0; i < particle.size(); ++i)
+	size_t i = blockIdx.x;
+	if (blockIdx.x >= neighbour->n)
+		return;
+	 
+	dens(i, particle, *kernel, *neighbour);
+	if (threadIdx.x == 0)
 	{
-		particle[i].density = dens(i, particle, kernel, neighbour);
-		particle[i].pressure = press(i, particle, kernel, neighbour);
+		particle[i].pressure = press(i, particle, *kernel, *neighbour);
+		particle[i].ax.set(0, 0, 0);
 	}
 }
 
 
 
-vec3 ax(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
+
+
+void ax(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
 {
 
+	size_t j = blockIdx.x;
+	vec3 ax = kernel.gradW(particle[n].pos, particle[j].pos, particle[n].h) * (particle[n].pressure / ( particle[n].density * particle[n].density) +
+		particle[j].pressure / (particle[j].density * particle[j].density) * particle[j].get_mass());
 
-	vec3 ax(0, 0, 0);
-#pragma omp parallel for reduction(+:ax)
-	for (size_t i : neighbour(n))
-	{
-		if (i != n)
-			ax += kernel.gradW(particle[n].pos, particle[i].pos, particle[n].h) *
-			particle[i].get_mass() * U_lj(particle[n].pos, particle[i].pos) / particle[i].density;
-	}
-	return ax * (-1) / particle[n].get_mass();
-}
+	atomicAdd(particle[n].pos.r, ax[0]);
+	atomicAdd(particle[n].pos.r + 1, ax[1]);
+	atomicAdd(particle[n].pos.r + 2, ax[2]);
+	
+	__syncthreads();
+	if (threadIdx.x == 0)
+		particle[n].ax *= (-1) / particle[n].get_mass();
 
-vec3 ax_inv_Eu(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
-{
-	vec3 ax(0, 0, 0);
-	vec3 g(0, -5, 0);
-
-#pragma omp parallel for reduction(+:ax)
-	for (size_t i : neighbour(n))
-	{
-		if (i != n)
-		{
-			ax += kernel.gradW(particle[n].pos, particle[i].pos, particle[n].h) * (particle[n].pressure / particle[n].density / particle[n].density +
-				particle[i].pressure / particle[i].density / particle[i].density) * particle[i].get_mass();
-		}
-	}
-	return ax * (-1) / particle[n].get_mass() + g;
 }
 
 float U_lj(vec3 r1, vec3 r2)

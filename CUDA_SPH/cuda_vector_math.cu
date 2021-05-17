@@ -11,28 +11,26 @@ void vec3::set(const real_t& x, const real_t& y, const real_t& z) {
 	r[2] = z;
 };
 
-vec3::~vec3() {
-	delete[] r;
-};
+
 
 vec3::vec3() { 
-	r = new real_t[3];
+
 	set(0, 0, 0); 
 };
 
 vec3::vec3(real_t X, real_t Y, real_t Z) { 
-	r = new real_t[3];
+
 	set(X, Y, Z); 
 };
 
 vec3::vec3(const vec3& v) {
-	r = new real_t[3];
+
 	set(v[0], v[1], v[2]);
 };
 
 vec3::vec3(const real_t* other) 
 { 
-	r = new real_t[3];
+
 	set(other[0], other[1], other[2]);
 };
 

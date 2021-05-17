@@ -32,6 +32,7 @@ public:
 
 };
 
+///Should be called with <<<N, N>>>
 __global__ void initNeighbour(Particle*, Neighbour);
 
 __device__ bool nei(Particle*, Particle*);
