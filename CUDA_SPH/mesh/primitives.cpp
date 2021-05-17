@@ -158,7 +158,7 @@ void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
     };
 
     // Materiall read
-    skip_to_tag(f_in, "$PhyscalNames");
+    skip_to_tag(f_in, "$PhysicalNames");
     int ph_ts_n;
     f_in >> ph_ts_n;
     std::unordered_map<int, index_t> mat_map;
@@ -178,7 +178,7 @@ void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
     int d0, d1, d2, d3;
     f_in >> d0 >> d1 >> d2 >> d3;
     skip_lines(f_in, d0 + d1 + d2);
-    std::unordered_map<int, int> entities;
+    std::unordered_map<int, index_t> entities;
     for(int i = 0; i < d3; ++i) {
       int tag, phsn, ntophsn;
       f_in >> tag;
@@ -209,7 +209,7 @@ void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
     f_in >> ebn >> ptsn;
     pts.reserve(ptsn);
     f_in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::unordered_map<int, int> nodes;
+    std::unordered_map<int, index_t> nodes;
     int abs_n = 0;
     for(int e = 0; e < ebn; ++e) {
       int d, t, p, nn;
@@ -231,8 +231,29 @@ void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
       };
     };
 
-    // Tetrahedra(entities) reading
-    // TODO
+    // Tetrahedra(elements) reading
+    skip_to_tag(f_in, "$Elements");
+    int eln;
+    f_in >> ebn >> eln;
+    f_in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    tetrs.resize(eln);
+    for(int e = 0; e < ebn; ++e) {
+      int d, t, type, nn;
+      f_in >> d >> t >> type >> nn;
+      if(d == 3) {
+        if(type != 4) {
+          std::cout << "[ERROR]: File contain non-tetrahedral domain";
+          throw "Non tetrahedral domain";
+        };
+        index_t id, p1, p2, p3, p4;
+        f_in >> id >> p1 >> p2 >> p3 >> p4;
+        tetrs.push_back(Tetrahedra(nodes[p1], nodes[p2], 
+                                   nodes[p3], nodes[p4], entities[id]));
+      } else {
+        skip_lines(f_in, 2*nn);
+      };
+    };
+
 
 
   } else {
