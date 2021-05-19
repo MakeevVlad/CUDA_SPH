@@ -130,13 +130,13 @@ void SurfaceMesh::get_triangle_as_array(real_t** tr, index_t id) {
   };
 };
 
-void SurfaceMesh::get_all_triangles(real_t*** trarr, index_t N) {
+void SurfaceMesh::get_all_triangles(real_t*** trarr, index_t count) {
   if(N > trs.size()) {
-    std::cout << "[ERROR]: Request of " << N << " triangles, which is more than " <<
+    std::cout << "[ERROR]: Request of " << count << " triangles, which is more than " <<
                   trs.size() << " existing in the mesh\n";
     throw "Request of too many triangles";
   };
-  for(int i = 0; i < N; ++i) {
+  for(int i = 0; i < count; ++i) {
     get_triangle_as_array(trarr[i], i);
   };
 };
@@ -318,6 +318,18 @@ real_t VolumeMesh::get_volume(index_t tetr) {
 
 real_t VolumeMesh::get_mass(index_t tetr) {
   return mats[tetrs[tetr].get_material_id()].get_density() * get_volume(tetr);
+};
+
+std::size_t VolumeMesh::get_tetrahedra_number() {
+  return tetrs.size();
+};
+
+void VolumeMesh::initialize_particle(Particle* part, index_t tetr) {
+  std::vector<real_t> x = get_mass_center(tetr);
+  for(int i = 0; i < 3; ++i) {
+    part->set_pos_i(x[i], i);
+  };
+  part->set_mass(get_mass(tetr));
 };
 
 #endif

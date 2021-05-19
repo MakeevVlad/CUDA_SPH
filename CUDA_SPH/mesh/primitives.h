@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include "../particle.cuh"
 
 using index_t = std::size_t;
 
@@ -101,6 +102,10 @@ class VolumeMesh {
   real_t get_representative_sphere_radius(index_t tetr);
   real_t get_volume(index_t tetr);
   real_t get_mass(index_t tetr);
+
+  std::size_t get_tetrahedra_number();
+
+  void initialize_particle(Particle* part, index_t tetr);
 };
 
 #endif
