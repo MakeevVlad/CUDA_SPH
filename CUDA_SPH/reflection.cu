@@ -4,18 +4,9 @@
 #pragma ones
 
 // Includes
-# define M_PI 3.14159265358979323846 // pi
+#include "info.cuh"
+#include "reflection.cuh"
 
-// Typedefs
-using real_t = float; // can be changed for float
-using timestep_t = real_t;
-using coord_t = real_t;
-using point_t = coord_t*;
-using point_init_t = coord_t[3]; // used in expr like point_t v = new point_init_t;
-using vector_t = coord_t*;
-using vector_init_t = coord_t[3]; // used in expr like vector_t v = new vector_init_t;
-
-// Writes vector to p to result vector
 __device__
 void vector(point_t p, vector_t result) {
   for(int i = 0; i < 3; ++i) {
@@ -121,15 +112,15 @@ namespace v_math{
   // Normalize vector in order v^2==1
   __device__
   void normalize(vector_t v) {
-    real_t norm = std::sqrt(dot(v, v));
+    real_t norm = rsqrtf(dot(v, v));
     for(int i = 0; i < 3; ++i) {
-      v[i] = v[i] / norm;
+      v[i] = v[i] * norm;
     };
   };
 };
 
 
-__device__ const real_t EPS = 1e-12; // TODO : need to be adjjusted!!!
+const real_t EPS = 1e-12; // TODO : need to be adjjusted!!!
 
 
 
@@ -221,10 +212,10 @@ void reflect(timestep_t dt, point_t x, vector_t v, point_t* tr) {
     point(p1, x);
     };
 
-    delete[] p1;
-    delete[] dp;
-    delete[] n;
-    delete[] r1;
-    delete[] r12;
-    delete[] r13;
+  delete[] p1;
+  delete[] dp;
+  delete[] n;
+  delete[] r1;
+  delete[] r12;
+  delete[] r13;
 };
