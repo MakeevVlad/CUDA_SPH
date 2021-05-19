@@ -20,6 +20,19 @@ __global__ void tester(Neighbour* nei)
 	}
 	
 }
+__global__ void tester2( Particle* particle)
+{
+	printf("Tester:\n");
+
+	for (size_t i = 0; i < 25; ++i)
+	{
+		printf("%f ", particle[i].density);
+		
+	}
+	printf("\n");
+
+}
+
 void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 {
 	Neighbour neighbour(pts_number);
@@ -32,49 +45,57 @@ void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 
 	for (size_t it = 0; it < iterations; ++it)
 	{
-		initNeighbour<<<pts_number, pts_number>>>(d_particle, neighbour.device());
-		//tester<<<1, 1>>> (neighbour.device());
-		//cudaDeviceSynchronize();
 
-		initParticles<<<pts_number, pts_number>>>(d_particle, kernel.device(), neighbour.device());
+		initNeighbour<<<pts_number, pts_number>>>(d_particle, neighbour.device());
+
+		initParticles<<<pts_number, pts_number>>>(d_particle, kernel.device(), neighbour.device(), it);
+		//tester2 << <1, 1 >> > (d_particle);
 		
-		//axelerations<<<pts_number, 3>>>(d_particle, kernel.device(), neighbour.device());
+		axelerations<<<pts_number, pts_number >>>(d_particle, kernel.device(), neighbour.device());
 		
-		//step << <pts_number, pts_number>> > (d_particle, kernel.device(), neighbour.device(), dt); 
+		step << <pts_number, 3 >> > (d_particle, kernel.device(), neighbour.device(), dt);
 		
 		
-		if (it % 100 == 0)
+		if (it % 10 == 0)
 		{
-			
-			system("cls");
-			std::cout << "Progress: " << it * 100 / iterations << " % " << std::endl
-				<< "interior time = " << it * dt << " s";
-			
+			cudaDeviceSynchronize();
+			update_particles(particle, d_particle, pts_number);
+			if (it % 1000 == 0)
+			{
+				system("cls");
+				std::cout << "Progress: " << it * 100 / iterations << " % " << std::endl
+					<< "interior time = " << it * dt << " s";
+			}
 			for (size_t p = 0; p < pts_number; ++p)
-				file << particle[p].get_pos_i(0) << " " << particle[p].get_pos_i(1) << " " << particle[p].get_pos_i(2) << " ";
+				file << particle[p].pos[0] << " " << particle[p].pos[1] << " " << particle[p].pos[2] << " ";
 			file << std::endl;
 		}
 
 	}
 
+	file.close();
 
 
 }
 
 
-__global__ void initParticles(Particle* particle, Kernel* kernel, Neighbour* neighbour)
+__global__ void initParticles(Particle* particle, Kernel* kernel, Neighbour* neighbour, size_t it)
 {
-	int i = blockIdx.x;
+	//printf("HERE %d \n", it);
+	int n = blockIdx.x;
 
-	dens(i, particle, *kernel, *neighbour);
+	dens(n, particle, *kernel, *neighbour);
 
-	__syncthreads();
+
+
 	if (threadIdx.x == 0)
 	{
-		particle[i].pressure = press(i, particle, *kernel, *neighbour);
-		particle[i].ax.set(0, 0, 0);
+		particle[n].pressure = press(n, particle, *kernel, *neighbour);
+		particle[n].ax.set(0, 0, 0);
 	}
 }
+
+
 
 __global__ void axelerations(Particle* particle, Kernel* kernel, Neighbour* nei)
 {
@@ -101,9 +122,10 @@ __global__ void step(Particle* particle, Kernel* kernel, Neighbour* nei, float d
 		particle[i].vel[j] += particle[i].ax[j] * dt;
 		particle[i].pos[j] += particle[i].vel[j] * dt;
 	}
-
+	
 
 	//Fixme: Delete this after the addition of meshes:
+	/*
 	__syncthreads();
 	size_t a = 0;
 	while (bounds(particle[i].pos))
@@ -125,94 +147,83 @@ __global__ void step(Particle* particle, Kernel* kernel, Neighbour* nei, float d
 			particle[i].pos[1] += particle[i].vel[1] * dt;
 		}
 		a++;
-	}
+	}*/
 
 }
 
 
 
-//Fixme: add usage of shared memoory
+
 __device__ void dens(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
 {
 	int i = threadIdx.x;
-
+	int j = 0;
 
 	__shared__ float res_dens[N];
+	res_dens[i] = 0;
+	//printf("%d %d \n", i, neighbour.nei_numbers[n]);
+	
 
 
 	if (i < neighbour.nei_numbers[n])
 	{
 
-		i = neighbour.neighbour[n * neighbour.n + i];
+		j = neighbour.neighbour[n * neighbour.n + i];
+		
+		res_dens[i] = particle[j].mass* kernel.W(particle[n].pos, particle[j].pos, particle[n].h);
+		
+	}
 
-		atomicAdd(&particle[n].density, particle[i].mass * kernel.W(particle[n].pos, particle[i].pos, particle[n].h));
+	
+	__syncthreads();
+	
+	if (i == 0)
+	{
+		particle[n].density = 0;
+		for (size_t c = 0; c < neighbour.nei_numbers[n]; ++c)
+			particle[n].density += res_dens[c];
+
+		//printf("%f \n", particle[n].density);
 	}
 }
 __device__ float press(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
 {
-	return particle[n].A * pow(particle[n].density, particle[n].gamma);
+	return particle[n].A * powf(particle[n].density, particle[n].gamma);
 }
-
-/*
-float divVel(size_t n, Particle* particle, Kernel& kernel, Neighbour& nei)
-{
-	float divV = 0;
-	for (size_t i : nei(n))
-		divV += (particle[i].vel - particle[n].vel) *
-		kernel.gradW(particle[n].pos, particle[i].pos, particle[n].h) *
-		particle[i].get_mass();
-
-	return divV / dens(n, particle, kernel);
-
-}
-
-vec3 rotVel(size_t n, float dt, Particle* particle, Kernel& kernel, Neighbour& nei)
-{
-	vec3 rotV = 0;
-	for (size_t i : nei(n))
-		rotV += (particle[i].vel - particle[n].vel) /
-		kernel.gradW(particle[n].pos, particle[i].pos, particle[n].h) *
-		particle[i].get_mass();
-
-	return rotV / dens(n, particle, kernel);
-}*/
 
 
 
 //Fixme: add usage of shared memoory
 __device__ void ax(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
 {
+	//printf("HERE\n");
 
 	int i = threadIdx.x;
-	if (i >= neighbour.NeigboursNumber(n))
-		return;
 
-	if (i == 0)
+	__shared__ vec3 res_ax[N];
+	res_ax[i] = vec3(0, 0, 0);
+
+	if (i < neighbour.nei_numbers[n] )
 	{
-		atomicExch(particle[n].ax.r, 0);
-		atomicExch(particle[n].ax.r + 1, 0);
-		atomicExch(particle[n].ax.r + 2, 0);
+
+		int j = neighbour.neighbour[n * neighbour.n + i];
+		if (j != n)
+			res_ax[i] = kernel.gradW(particle[n].pos, particle[j].pos, particle[n].h) *(particle[n].pressure / (particle[n].density * particle[n].density) +
+			particle[j].pressure / (particle[j].density * particle[j].density)) * particle[j].mass;
+
 	}
 
 	__syncthreads();
-	
-	int j = neighbour.neighbour[n * neighbour.n + i];
-	
-	vec3 ax = kernel.gradW(particle[n].pos, particle[j].pos, particle[n].h) * (particle[n].pressure / ( particle[n].density * particle[n].density) +
-		particle[j].pressure / (particle[j].density * particle[j].density)) * particle[j].mass;
-
-
-	atomicAdd(particle[n].ax.r, ax[0]);
-	atomicAdd(particle[n].ax.r + 1, ax[1]);
-	atomicAdd(particle[n].ax.r + 2, ax[2]);
-	
-	__syncthreads();
 	if (i == 0)
 	{
+		particle[n].ax = vec3(0, 0, 0);
+		for (size_t c = 0; c < neighbour.nei_numbers[n]; ++c)
+			particle[n].ax += res_ax[c];
+
 		particle[n].ax *= (-1) / particle[n].mass;
-		printf("%f %f %f", particle[n].ax[0], particle[n].ax[1], particle[n].ax[2]);
-	}
 
+		
+	}
 }
 
 

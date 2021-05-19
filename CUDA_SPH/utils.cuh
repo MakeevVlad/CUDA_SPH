@@ -38,4 +38,4 @@ __device__ float scalar_prod(float*, float*);
 
 
 //Should be called with <<<N, maxNeighbours>>>
-__global__ void initParticles(Particle*, Kernel*, Neighbour*);
+__global__ void initParticles(Particle*, Kernel*, Neighbour*, size_t);

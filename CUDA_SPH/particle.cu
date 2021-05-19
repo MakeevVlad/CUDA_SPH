@@ -9,7 +9,7 @@ Particle::Particle()
 	pressure = 1;
 	h = 1;
 	gamma = 1;
-	A = 1;
+	A = 10;
 	this->set_pos(0, 0, 0);
 	this->set_vel(0, 0, 0);
 	this->set_ax(0, 0, 0);
@@ -58,9 +58,23 @@ void Particle::set_ax(float x, float y, float z)
 
 float Particle::get_pos_i(int i)
 {
-	cudaMemcpy(pos.r + i, d_this->pos.r + i, sizeof(float), cudaMemcpyDeviceToHost);
+	Particle* tmp = new Particle;
+	cudaError_t err = cudaMemcpy(tmp, d_this, sizeof(float), cudaMemcpyDeviceToHost);
+	if (err != cudaSuccess)
+		printf(cudaGetErrorString(err));
+	
+	pos = tmp->pos;
+	delete tmp;
 	return pos[i];
 }
+
+void update_particles(Particle* ps, Particle* d_ps, size_t ps_num)
+{
+
+	cudaMemcpy(ps, d_ps, ps_num * sizeof(Particle), cudaMemcpyDeviceToHost);
+}
+
+
 
 Particle* Particle::device()
 {
@@ -74,8 +88,8 @@ Particle* device_particles_array(Particle* ps, size_t n)
 
 	cudaMalloc((void**)&d_ps, n * sizeof(Particle));
 	cudaMemcpy(d_ps, ps, n * sizeof(Particle), cudaMemcpyHostToDevice);
-	for (size_t i = 0; i < n; ++i)
-		cudaMemcpy(d_ps + i, ps + i, sizeof(Particle), cudaMemcpyHostToDevice);
+	//for (size_t i = 0; i < n; ++i)
+	//	cudaMemcpy(d_ps + i, ps + i, sizeof(Particle), cudaMemcpyHostToDevice);
 
 	return d_ps;
 }

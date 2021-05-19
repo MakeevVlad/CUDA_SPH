@@ -59,13 +59,13 @@ __global__ void initNeighbour(Particle* pts, Neighbour* nei)
 	__shared__ bool tmp[N];
 	tmp[j] = 0;
 
-
 	
 	if (i < nei->n && j < nei->n)
 	{
+		
 		if ((pts[i].pos - pts[j].pos).abssquared() < 4 * pts[i].h * pts[i].h)
 		{
-
+			//printf("%f %f \n", (pts[i].pos - pts[j].pos).abssquared(), pts[i].h);
 			tmp[j] = 1;
 
 		}
@@ -77,7 +77,7 @@ __global__ void initNeighbour(Particle* pts, Neighbour* nei)
 			nei->nei_numbers[i] = 0;
 			for (size_t c = 0; c < N; ++c)
 			{
-
+				
 				if (tmp[c])
 				{
 					nei->neighbour[i * nei->n + nei->nei_numbers[i]] = c;

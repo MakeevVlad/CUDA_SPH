@@ -11,7 +11,7 @@
 
 __global__ void test(Particle* p)
 {
-	printf("%f %f %f", p[0].pos[0], p[1].pos[1], p[0].pos[2]);
+	printf("%f %f %f", p[0].pos[0], p[0].pos[1], p[0].pos[2]);
 }
 
 __global__ void tester1()
@@ -34,22 +34,26 @@ int main()
 {
 
 	Particle* ps = new Particle[N];
-
+	/*
 	for (size_t i = 0; i <5; ++i)
 		for (size_t j = 0; j < 5; ++j)
 		{
-			ps[i * 5 + j].set_pos(i, j + 4, 0);
+			ps[i * 5 + j].set_pos(i + 0.1, j + 4.1, 0);
 			ps[i * 5 + j].set_vel(0, 0, 0);
 			ps[i * 5 + j].set_ax(0, 0, 0);
 		}
-
-
-
-	float dt = 0.001;
+		*/
+	ps[0].set_pos(0.5, 0, 0);
+	ps[0].set_vel(0, 0, 0);
+	ps[0].set_ax(0, 0, 0);
+	ps[1].set_pos(-0.5, 0, 0);
+	ps[1].set_vel(0, 0, 0);
+	ps[1].set_ax(0, 0, 0);
+	float dt = 0.01;
 	size_t iterations = 10000;
 	size_t pts_number = N;
 	solver(ps, dt, iterations, pts_number);
 
-	//test<<<1, 1>>>(device_particles_array(ps, 2));
+
 	return 0; 
 }

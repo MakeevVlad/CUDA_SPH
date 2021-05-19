@@ -3,7 +3,7 @@
 
 using real_t = float;
 
-#define N 25
+#define N 2
 
 
 #endif
