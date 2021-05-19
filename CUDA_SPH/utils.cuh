@@ -1,14 +1,17 @@
 #pragma once
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-
+#include <fstream>
 #include "particle.cuh"
 #include "neighbour.cuh"
 #include "sph.cuh"
+
+void solver(Particle*, float, size_t, size_t);
+
 __device__ void eiler_scheme(Particle*, Kernel&, double, size_t);
 
-__global__ void step(Particle*, Kernel&, Neighbour*,  float);
-__global__ void axelerations(Particle*, Kernel&, Neighbour*);
+__global__ void step(Particle*, Kernel*, Neighbour*,  float);
+__global__ void axelerations(Particle*, Kernel*, Neighbour*);
 
 // particle's axeleration, dv/dt 
 __device__ void ax(size_t, Particle*, Kernel&, Neighbour&);
@@ -19,7 +22,7 @@ __device__ float energy(Particle*);
 __device__ void dens(size_t n, Particle*, Kernel&, Neighbour&);
 
 //pressure (-||-)
-__device__ void press(size_t, Particle*, Kernel&, Neighbour&);
+__device__ float press(size_t, Particle*, Kernel&, Neighbour&);
 //adiabatic exponent (-||-)
 __device__ float gamma(size_t, Particle*, Kernel&);
 
