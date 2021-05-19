@@ -218,6 +218,49 @@ void reflect(timestep_t dt, point_t x, vector_t v, point_t* tr) {
   delete[] r13;
 };
 
+// Normal version with cute and fluffy data types
+__device__
+void reflect(timestep_t dt, vec3& x, vec3& v, vec3* tr) {
+  // step 1 - finding intersection of (x, x+dx) ray and tr plane
+  // eq of point on (x, x+dx)  r = p1 + mu * dp
+  // eq of points on tr  (r,n) = -D
+  vec3 dp = v * dt;
+  vec3 r1 = tr[0];
+  vec3 r12 = tr[1] - tr[0];
+  vec3 r13 = tr[2] - tr[0];
+  vec3 n = cross(r12, r13).normalize();
+  real_t D = (-1) * (n * r1);
+  mu = -(D + n*x) / (n*dp);
+
+  if((mu > 0) && (mu < 1)) {
+    // Reflection may occur => step 2 - check is p on triangle
+    p = x + dp*mu;
+    real_t angle_sum = 0;
+    vec3 prs[3];
+    for(int i = 0; i < 3; ++i) {
+      prs[i] = (tr[i]-p).normalize();
+    };
+    for(int i = 0; i < 0; ++i) {
+      angle_sum += acosf(prs[i] * prs[(i+1)%3]);
+    };
+    if(fabsf(angle_sum - 2 * M_PI) < EPS) {
+      // Reflection definetely takes place
+      dx2 = dp*(1-mu); // wrong movement after collision
+      // lets fix: dx2_true = dx2 - 2n (n,dx2)
+      // and x_final = p + dx2_true
+      x = p + dx2 - n * 2 * (n*dx2);
+      // velocity: v_res = v - 2n(n,v)
+      v = v - n * 2 * (n*v);
+    } else {
+      // nothhing to do
+      x += dp;
+    };
+  } else {
+    // nothing to do
+    x += dp;
+  };
+};
+
 
 // conversion (Need fix in the first part)
 __device__
@@ -230,9 +273,20 @@ vec3 vec3_from_point(point_t x) {
 __device__
 real_t distance(point_t x, point_t* tr) {
   vec3 p = vec3_from_point(x);
-  vec3 t1 = vec3_from_point(tr[0]);
-  vec3 t2 = vec3_from_point(tr[1]);
-  vec3 t3 = vec3_from_point(tr[2]);
+  vec3 trs[3];
+  vec3 trs[0] = vec3_from_point(tr[0]);
+  vec3 trs[1] = vec3_from_point(tr[1]);
+  vec3 trs[2] = vec3_from_point(tr[2]);
+  return distance(p, trs);
+};
+ 
+
+// Normal types
+__device__
+real_t distance(const vec3& p, const point_t* const tr) {
+  vec3 t1 = tr[0];
+  vec3 t2 = tr[1];
+  vec3 t3 = tr[2];
   vec3 n = cross(t2-t1, t3-t1).normalize();
   vec3 proj = p - n*(t1-p);
   // baricentric coords proj = t1*u + t2*v + t3*w
