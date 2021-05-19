@@ -6,6 +6,7 @@
 // Includes
 #include "info.cuh"
 #include "reflection.cuh"
+#include "cuda_vector_math.cuh"
 
 __device__
 void vector(point_t p, vector_t result) {
@@ -217,9 +218,8 @@ void reflect(timestep_t dt, point_t x, vector_t v, point_t* tr) {
   delete[] r13;
 };
 
-/*
+
 // conversion (Need fix in the first part)
-#include "cuda_vector_math.cuh"
 __device__
 vec3 vec3_from_point(point_t x) {
   return vec3(x[0], x[1], x[2]);
@@ -238,10 +238,41 @@ real_t distance(point_t x, point_t* tr) {
   // baricentric coords proj = t1*u + t2*v + t3*w
   // perform
   // proj-t3 -> prroj
-  // t1 - t3 -> t1
-  // t2 - t3 -> t2
+  // t1 - t3 -> t1p
+  // t2 - t3 -> t2p
   // so proj = u*t1 + v * t2
-  vec3 t1_r = cross();
-  real_t u = 
+  vec3 t1p = t1 - t3;
+  vec3 t2p = t2 - t3;
+  proj = proj - t3;
+  vec3 t1_r = cross(t1p,n).normalize();
+  vec3 t2_r = cross(t2p,n).normalize();
+  real_t u = proj*t2_r / (t1p*t2_r);
+  real_t v = proj*t1_r / (t2p*t1_r);
+  real_t w = 1 - u - v;
+    //if((u >= 0) && (u <= 1) && (v >= 0) && (v <= 1) && (w >= 0) && (w <= 1)) {
+
+  real_t clamp01(real_t t) {
+    if(t < 0) { return 0; };
+    if(t > 1) { return 1; };
+    return t;
+  };
+
+  if(u < 0) {
+    vec3 tmp = t3p-t2p;
+    w = clamp01( ((proj-t2p) * tmp) / (tmp*tmp) );
+    u = 0;
+    v = 1 - w; 
+  } else if(v < 0) {
+    vec3 tmp = t1p-t3p;
+    u = clamp01( ((proj-t3p) * tmp) / (tmp*tmp) );
+    v = 0;
+    w = 1 - u; 
+  } else if(w < 0) {
+    vec3 tmp = t2p-t1p;
+    u = clamp01( ((proj-t1p) * tmp) / (tmp*tmp) );
+    v = 0;
+    w = 1 - u; 
+  };
+
+  return abs(p - (t1*u + t2*v + t3*w));
 };
-*/
