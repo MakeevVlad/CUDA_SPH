@@ -23,7 +23,7 @@ std::string get_file_extension(std::string fname) {
 
 void skip_to_tag(std::istream& in, std::string tag) {
   std::string line;
-  while((line != tag) || !in.eof()) {
+  while((line != tag) && !in.eof()) {
     std::getline(in, line);
   };
 };
@@ -143,17 +143,30 @@ void SurfaceMesh::get_all_triangles(real_t*** trarr, index_t N) {
 // VolumeMesh
 VolumeMesh::VolumeMesh() = default;
 
+void VolumeMesh::construct_materials(std::string fmat) {
+  std::ifstream mat_in(fmat);
+  if(!mat_in.is_open()) {
+    std::cout << "[ERROR]: File \"" << fmat << "\" not found\n";
+    throw "File not found";
+  };
+  // for now .mat is "ph_tag1 dens1\nph_tag2 dens2\n..."
+  std::unordered_map<int, real_t> props;
+  int ph_tag;
+  while(!mat_in.eof()) {
+    mat_in >> ph_tag;
+    mat_in >> props[ph_tag];
+  };
+  for(int i = 0; i < mats.size(); ++i) {
+    mats[i].set_parametres(props[mats[i].get_tag()]);
+  };
+};
+
 void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
   std::string ext = get_file_extension(fmesh);
   if(ext == "msh") {
     std::ifstream f_in(fmesh);
     if(!f_in.is_open()) {
       std::cout << "[ERROR]: File \"" << fmesh << "\" not found\n";
-      throw "File not found";
-    };
-    std::ifstream mat_in(fmat);
-    if(!mat_in.is_open()) {
-      std::cout << "[ERROR]: File \"" << fmat << "\" not found\n";
       throw "File not found";
     };
 
@@ -165,24 +178,28 @@ void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
     for(int i = 0; i < ph_ts_n; ++i) {
       int dim, ph_tag;
       std::string name;
-      f_in >> dim >> ph_tag >> name;
+      f_in >> dim >> ph_tag;
+      f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+      std::getline(f_in, name);
       if(dim == 3) {
         mats.push_back(Material(name, ph_tag));
         mat_map[ph_tag] = mats.size() - 1;
       };
     };
-    // TODO : read material props from file
+
+    construct_materials(fmat);
 
     // Entities read
     skip_to_tag(f_in, "$Entities");
     int d0, d1, d2, d3;
     f_in >> d0 >> d1 >> d2 >> d3;
-    skip_lines(f_in, d0 + d1 + d2);
+    skip_lines(f_in, d0 + d1 + d2 + 1); // and the first remained \n symbol
     std::unordered_map<int, index_t> entities;
     for(int i = 0; i < d3; ++i) {
       int tag, phsn, ntophsn;
       f_in >> tag;
-      // ignore next 6 floats
+      // ignore next 6 floats and lleading space
+      f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
       f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
       f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
       f_in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
@@ -214,21 +231,17 @@ void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
     for(int e = 0; e < ebn; ++e) {
       int d, t, p, nn;
       f_in >> d >> t >> p >> nn;
-      if(d == 3) {
-        for(int i = 0; i < nn; ++i) {
-          int nid;
-          f_in >> nid;
-          nodes[nid] = i + abs_n;
-        };
-        for(int i = 0; i < nn; ++i) {
-          real_t x,y,z;
-          f_in >> x >> y >> z;
-          pts.push_back(Point(x, y, z));
-        };
-        abs_n += nn;
-      } else {
-        skip_lines(f_in, nn*2);
+      for(int i = 0; i < nn; ++i) {
+        int nid;
+        f_in >> nid;
+        nodes[nid] = i + abs_n;
       };
+      for(int i = 0; i < nn; ++i) {
+        real_t x,y,z;
+        f_in >> x >> y >> z;
+        pts.push_back(Point(x, y, z));
+      };
+      abs_n += nn;
     };
 
     // Tetrahedra(elements) reading
@@ -236,7 +249,7 @@ void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
     int eln;
     f_in >> ebn >> eln;
     f_in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    tetrs.resize(eln);
+    tetrs.reserve(eln);
     for(int e = 0; e < ebn; ++e) {
       int d, t, type, nn;
       f_in >> d >> t >> type >> nn;
@@ -246,14 +259,15 @@ void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
           throw "Non tetrahedral domain";
         };
         index_t id, p1, p2, p3, p4;
-        f_in >> id >> p1 >> p2 >> p3 >> p4;
-        tetrs.push_back(Tetrahedra(nodes[p1], nodes[p2], 
-                                   nodes[p3], nodes[p4], entities[id]));
+        for(int i = 0; i < nn; ++i) {
+          f_in >> id >> p1 >> p2 >> p3 >> p4;
+          tetrs.push_back(Tetrahedra(nodes[p1], nodes[p2], 
+                                    nodes[p3], nodes[p4], entities[id]));
+        };
       } else {
-        skip_lines(f_in, 2*nn);
+        skip_lines(f_in, nn+1);
       };
     };
-
 
 
   } else {

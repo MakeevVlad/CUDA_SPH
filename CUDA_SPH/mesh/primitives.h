@@ -18,6 +18,7 @@ class Material {
  public:
   Material(std::string name, int tag) : density(0), name(name), tag(tag) {};
   void set_parametres(float dens) { density = dens; };
+  int get_tag() { return tag; };
 };
 
 
@@ -78,6 +79,7 @@ class VolumeMesh {
  public:
   VolumeMesh();
   void construct_from_file(std::string fmesh, std::string fmat);
+  void construct_materials(std::string fmat);
   // TODO : generate_particles
 };
 
