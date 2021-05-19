@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <utility>
 
 using index_t = std::size_t;
 
@@ -81,6 +82,9 @@ class VolumeMesh {
   void construct_from_file(std::string fmesh, std::string fmat);
   void construct_materials(std::string fmat);
   // TODO : generate_particles
+
+  std::vector<real_t> get_mass_center(index_t tetr);
+  real_t get_representative_sphere_radius(index_t tetr);
 };
 
 #endif

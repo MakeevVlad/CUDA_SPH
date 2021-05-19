@@ -9,6 +9,7 @@
 #include <fstream>
 #include <limits>
 #include <unordered_map>
+#include <cmath>
 
 
 // Utils
@@ -274,6 +275,31 @@ void VolumeMesh::construct_from_file(std::string fmesh, std::string fmat) {
     std::cout << "[ERROR]: Wrong file format(" << ext <<
           ") for volume mesh providen\n";
   };
+};
+
+std::vector<real_t> VolumeMesh::get_mass_center(index_t tetr) {
+  std::vector<real_t> x(3, 0);
+  real_t r = 0;
+  for(int i = 0; i < 3; ++i) {
+    for(int j =0; j < 4; ++j) {
+      x[i] += pts[tetrs[tetr][j]][i];
+    };
+    x[i] /= 4;
+  };
+  return x;
+};
+
+real_t VolumeMesh::get_representative_sphere_radius(index_t tetr) {
+  real_t r_sq = 0;
+  std::vector<real_t> x = get_mass_center(tetr);
+  for(int j = 0; j < 4; ++j) {
+    for(int i = 0; i < 3; ++i) {
+      real_t temp = pts[tetrs[tetr][j]][i];
+      r_sq += (temp - x[i])*(temp - x[i]);
+    };
+  };
+  r_sq /= 4;
+  return std::sqrt(r_sq);
 };
 
 #endif
