@@ -4,18 +4,9 @@
 
 
 // Includes
-# define M_PI 3.14159265358979323846 // pi
+#include "info.cuh"
+#include "reflection.cuh"
 
-// Typedefs
-using real_t = float; // can be changed for float
-using timestep_t = real_t;
-using coord_t = real_t;
-using point_t = coord_t*;
-using point_init_t = coord_t[3]; // used in expr like point_t v = new point_init_t;
-using vector_t = coord_t*;
-using vector_init_t = coord_t[3]; // used in expr like vector_t v = new vector_init_t;
-
-// Writes vector to p to result vector
 __device__
 void vector(point_t p, vector_t result) {
   for(int i = 0; i < 3; ++i) {
@@ -121,15 +112,12 @@ namespace v_math{
   // Normalize vector in order v^2==1
   __device__
   void normalize(vector_t v) {
-    real_t norm = std::sqrt(dot(v, v));
+    real_t norm = rsqrtf(dot(v, v));
     for(int i = 0; i < 3; ++i) {
-      v[i] = v[i] / norm;
+      v[i] = v[i] * norm;
     };
   };
 };
-
-
-const real_t EPS = 1e-12; // TODO : need to be adjjusted!!!
 
 
 
@@ -228,3 +216,32 @@ void reflect(timestep_t dt, point_t x, vector_t v, point_t* tr) {
   delete[] r12;
   delete[] r13;
 };
+
+/*
+// conversion (Need fix in the first part)
+#include "cuda_vector_math.cuh"
+__device__
+vec3 vec3_from_point(point_t x) {
+  return vec3(x[0], x[1], x[2]);
+};
+
+
+// Evaluate distance between point x and triangle tr
+__device__
+real_t distance(point_t x, point_t* tr) {
+  vec3 p = vec3_from_point(x);
+  vec3 t1 = vec3_from_point(tr[0]);
+  vec3 t2 = vec3_from_point(tr[1]);
+  vec3 t3 = vec3_from_point(tr[2]);
+  vec3 n = cross(t2-t1, t3-t1).normalize();
+  vec3 proj = p - n*(t1-p);
+  // baricentric coords proj = t1*u + t2*v + t3*w
+  // perform
+  // proj-t3 -> prroj
+  // t1 - t3 -> t1
+  // t2 - t3 -> t2
+  // so proj = u*t1 + v * t2
+  vec3 t1_r = cross();
+  real_t u = 
+};
+*/
