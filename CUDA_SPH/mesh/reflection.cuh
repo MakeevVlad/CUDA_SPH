@@ -3,7 +3,8 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 // Includes
-#include "../info.cuh"
+#include "info.cuh"
+#include "cuda_vector_math.cuh"
 # define M_PI 3.14159265358979323846 // pi
 
 // Typedefs
@@ -83,5 +84,19 @@ __device__ const real_t EPS = 1e-6; // TODO : need to be adjjusted!!!
 // All changes occurs in corresponding arrays
 __device__
 void reflect(timestep_t dt, point_t x, vector_t v, point_t* tr);
+
+__device__
+void reflect(timestep_t dt, vec3 x, vec3 v, vec3* tr);
+
+
+__device__
+vec3 vec3_from_point(point_t x);
+
+// Evaluate distance between point x and triangle tr
+__device__
+real_t distance(point_t x, point_t* tr);
+
+__device__
+real_t distance(const vec3& p, const point_t* const tr);
 
 #endif

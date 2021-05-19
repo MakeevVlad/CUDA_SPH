@@ -220,3 +220,116 @@ void reflect(timestep_t dt, point_t x, vector_t v, point_t* tr) {
   delete[] r12;
   delete[] r13;
 };
+
+// Normal version with cute and fluffy data types
+__device__
+void reflect(timestep_t dt, vec3& x, vec3& v, vec3* tr) {
+  // step 1 - finding intersection of (x, x+dx) ray and tr plane
+  // eq of point on (x, x+dx)  r = p1 + mu * dp
+  // eq of points on tr  (r,n) = -D
+  vec3 dp = v * dt;
+  vec3 r1 = tr[0];
+  vec3 r12 = tr[1] - tr[0];
+  vec3 r13 = tr[2] - tr[0];
+  vec3 n = cross(r12, r13).normalize();
+  real_t D = (-1) * (n * r1);
+  mu = -(D + n*x) / (n*dp);
+
+  if((mu > 0) && (mu < 1)) {
+    // Reflection may occur => step 2 - check is p on triangle
+    p = x + dp*mu;
+    real_t angle_sum = 0;
+    vec3 prs[3];
+    for(int i = 0; i < 3; ++i) {
+      prs[i] = (tr[i]-p).normalize();
+    };
+    for(int i = 0; i < 0; ++i) {
+      angle_sum += acosf(prs[i] * prs[(i+1)%3]);
+    };
+    if(fabsf(angle_sum - 2 * M_PI) < EPS) {
+      // Reflection definetely takes place
+      dx2 = dp*(1-mu); // wrong movement after collision
+      // lets fix: dx2_true = dx2 - 2n (n,dx2)
+      // and x_final = p + dx2_true
+      x = p + dx2 - n * 2 * (n*dx2);
+      // velocity: v_res = v - 2n(n,v)
+      v = v - n * 2 * (n*v);
+    } else {
+      // nothhing to do
+      x += dp;
+    };
+  } else {
+    // nothing to do
+    x += dp;
+  };
+};
+
+
+// conversion (Need fix in the first part)
+__device__
+vec3 vec3_from_point(point_t x) {
+  return vec3(x[0], x[1], x[2]);
+};
+
+
+// Evaluate distance between point x and triangle tr
+__device__
+real_t distance(point_t x, point_t* tr) {
+  vec3 p = vec3_from_point(x);
+  vec3 trs[3];
+  vec3 trs[0] = vec3_from_point(tr[0]);
+  vec3 trs[1] = vec3_from_point(tr[1]);
+  vec3 trs[2] = vec3_from_point(tr[2]);
+  return distance(p, trs);
+};
+ 
+
+// Normal types
+__device__
+real_t distance(const vec3& p, const point_t* const tr) {
+  vec3 t1 = tr[0];
+  vec3 t2 = tr[1];
+  vec3 t3 = tr[2];
+  vec3 n = cross(t2-t1, t3-t1).normalize();
+  vec3 proj = p - n*(t1-p);
+  // baricentric coords proj = t1*u + t2*v + t3*w
+  // perform
+  // proj-t3 -> prroj
+  // t1 - t3 -> t1p
+  // t2 - t3 -> t2p
+  // so proj = u*t1 + v * t2
+  vec3 t1p = t1 - t3;
+  vec3 t2p = t2 - t3;
+  proj = proj - t3;
+  vec3 t1_r = cross(t1p,n).normalize();
+  vec3 t2_r = cross(t2p,n).normalize();
+  real_t u = proj*t2_r / (t1p*t2_r);
+  real_t v = proj*t1_r / (t2p*t1_r);
+  real_t w = 1 - u - v;
+    //if((u >= 0) && (u <= 1) && (v >= 0) && (v <= 1) && (w >= 0) && (w <= 1)) {
+
+  real_t clamp01(real_t t) {
+    if(t < 0) { return 0; };
+    if(t > 1) { return 1; };
+    return t;
+  };
+
+  if(u < 0) {
+    vec3 tmp = t3p-t2p;
+    w = clamp01( ((proj-t2p) * tmp) / (tmp*tmp) );
+    u = 0;
+    v = 1 - w; 
+  } else if(v < 0) {
+    vec3 tmp = t1p-t3p;
+    u = clamp01( ((proj-t3p) * tmp) / (tmp*tmp) );
+    v = 0;
+    w = 1 - u; 
+  } else if(w < 0) {
+    vec3 tmp = t2p-t1p;
+    u = clamp01( ((proj-t1p) * tmp) / (tmp*tmp) );
+    v = 0;
+    w = 1 - u; 
+  };
+
+  return abs(p - (t1*u + t2*v + t3*w));
+};
