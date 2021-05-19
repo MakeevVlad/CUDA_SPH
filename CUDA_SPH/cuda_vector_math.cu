@@ -125,8 +125,11 @@ real_t vec3::abssquared() const {
 real_t vec3::projection(const vec3& other)
 {
 	return this->abs() * vcos(*this, other) ;
-}
+};
 
+void vec3::normalize() {
+	*this *= rsqrtf(abssquared);
+};
 
 
 real_t abs(const vec3& data) {

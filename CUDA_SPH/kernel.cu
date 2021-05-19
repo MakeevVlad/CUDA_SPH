@@ -49,7 +49,7 @@ int main()
 
 	/* Generating from mesh */
 	/* VolumeMesh mesh;
-	mesh.construct_from_file("input.msh");
+	mesh.construct_from_file("input.msh", "materials.mat");
 	size_t pts_number = mesh.get_tetrahedra_number();
 
 	// init masses and poses
