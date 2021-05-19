@@ -14,6 +14,9 @@ public:
 
 	size_t n;
 
+
+	//int* matrix;
+	// 
 	//__device__ Neighbour(size_t);
 	Neighbour(size_t);
 	Neighbour() {};
@@ -24,7 +27,7 @@ public:
 	}
 
 	//Returns the number of neighbours for n-th particle
-	__device__ size_t NeigboursMumber(size_t);
+	__device__ size_t NeigboursNumber(size_t);
 
 	//Returns ptr to array with neighbours' numbers
 	__device__ size_t* getNeighbours(size_t);
@@ -32,6 +35,7 @@ public:
 
 };
 
-__global__ void initNeighbour(Particle*, Neighbour);
+///Should be called with <<<N, N>>>
+__global__ void initNeighbour(Particle*, Neighbour*);
 
 __device__ bool nei(Particle*, Particle*);

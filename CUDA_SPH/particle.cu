@@ -58,7 +58,7 @@ void Particle::set_ax(float x, float y, float z)
 
 float Particle::get_pos_i(int i)
 {
-	cudaMemcpy(pos + i, d_this->pos + i, sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy(pos.r + i, d_this->pos.r + i, sizeof(float), cudaMemcpyDeviceToHost);
 	return pos[i];
 }
 

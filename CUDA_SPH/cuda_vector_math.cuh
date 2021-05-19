@@ -1,6 +1,8 @@
 #ifndef CUDA_VECTOR_MATH_H
 #define CUDA_VECTOR_MATH_H
 
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
 #include "info.cuh"
 #include <iostream>
 #include <vector>
@@ -10,7 +12,7 @@
 class vec3
 {
 public:
-	real_t* r;
+	real_t r[3];
 	
 	__host__ __device__
 	vec3();
@@ -20,8 +22,7 @@ public:
   vec3(const vec3& v);
 	__host__ __device__
 	vec3(const real_t*);
-	__host__ __device__
-  ~vec3();
+
 
 	__host__ __device__
 	vec3 operator+(const vec3&) const;

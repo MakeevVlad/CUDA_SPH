@@ -3,7 +3,7 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-
+#include "cuda_vector_math.cuh"
 
 class Particle
 {
@@ -11,10 +11,10 @@ private:
 	Particle* d_this;
 public:
 	
-	float pos[3]; //Position radius-vector
+	vec3 pos; //Position radius-vector
 
-	float vel[3]; //Velosity vector
-	float ax[3]; //Acceleration vector
+	vec3 vel; //Velosity vector
+	vec3 ax; //Acceleration vector
 
 	float mass; //Mass and radius
 	//float energy;
