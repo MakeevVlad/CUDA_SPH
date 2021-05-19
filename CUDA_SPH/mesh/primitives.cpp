@@ -10,6 +10,7 @@
 #include <limits>
 #include <unordered_map>
 #include <cmath>
+#include <sstream>
 
 
 // Utils
@@ -151,14 +152,15 @@ void VolumeMesh::construct_materials(std::string fmat) {
     throw "File not found";
   };
   // for now .mat is "ph_tag1 dens1\nph_tag2 dens2\n..."
-  std::unordered_map<int, real_t> props;
+  std::unordered_map<int, std::string> props;
   int ph_tag;
   while(!mat_in.eof()) {
     mat_in >> ph_tag;
-    mat_in >> props[ph_tag];
+    std::getline(mat_in, props[ph_tag]);
   };
   for(int i = 0; i < mats.size(); ++i) {
-    mats[i].set_parametres(props[mats[i].get_tag()]);
+    std::istringstream inp (props[mats[i].get_tag()]);
+    mats[i].set_parametres(inp);
   };
 };
 
@@ -300,6 +302,22 @@ real_t VolumeMesh::get_representative_sphere_radius(index_t tetr) {
   };
   r_sq /= 4;
   return std::sqrt(r_sq);
+};
+
+real_t VolumeMesh::get_volume(index_t tetr) {
+  std::vector<std::vector<real_t>> v(3, std::vector<real_t>(3));
+  for(int i = 1; i < 4; ++i) {
+    for(int j = 0; j < 3; ++j) {
+      v[i-1][j] = pts[tetrs[tetr][i]][j] - pts[tetrs[tetr][0]][j];
+    };
+  };
+  return std::abs(v[0][0]*v[1][1]*v[2][2] + v[0][1]*v[1][2]*v[2][0] +
+                  v[1][0]*v[2][1]*v[0][2] - v[0][2]*v[1][1]*v[2][0] -
+                  v[0][0]*v[2][1]*v[1][2] - v[2][2]*v[0][1]*v[1][0]) / 6;
+};
+
+real_t VolumeMesh::get_mass(index_t tetr) {
+  return mats[tetrs[tetr].get_material_id()].get_density() * get_volume(tetr);
 };
 
 #endif

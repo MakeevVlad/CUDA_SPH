@@ -11,15 +11,29 @@
 using index_t = std::size_t;
 
 
+// Material class, thhat store all information of materials in initial
+// distribution. Will be used to form particles from mesh, so need to
+// handle all your additional data related to particles
 class Material {
  private:
-  float density;
+  real_t density;
+
+  // tag and name -- values gotten from mesh
   std::string name;
   int tag;
  public:
   Material(std::string name, int tag) : density(0), name(name), tag(tag) {};
-  void set_parametres(float dens) { density = dens; };
+  // void set_parametres(float dens) { density = dens; };
   int get_tag() { return tag; };
+
+  // We almost always need density
+  real_t get_density() { return density; };
+
+  // handler of line in .mat file (physical tag will be parsed in
+  // VolumeMesh::construct_materials() is not included)
+  void set_parametres(std::istream& input) {
+    input >> density;
+  };
 };
 
 
@@ -85,6 +99,8 @@ class VolumeMesh {
 
   std::vector<real_t> get_mass_center(index_t tetr);
   real_t get_representative_sphere_radius(index_t tetr);
+  real_t get_volume(index_t tetr);
+  real_t get_mass(index_t tetr);
 };
 
 #endif
