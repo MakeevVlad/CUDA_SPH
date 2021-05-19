@@ -13,7 +13,8 @@ def dotstoimage(thisx, thisy):
     return field
 
 fig = plt.figure(figsize=(5, 4))
-a = 5
+a = 40
+n = 400
 ax = fig.add_subplot(111, autoscale_on=False, xlim=(-a, a), ylim=(-a, a))
 ax.set_aspect('equal')
 ax.grid()
@@ -26,8 +27,8 @@ time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
 data = np.loadtxt('test.txt')
 
 def animate(i):
-    thisx = data[i*10][np.array([a for a in np.arange(0, 2*3, 3)])]
-    thisy = data[i*10][np.array([a+1 for a in np.arange(0, 2*3, 3)])]
+    thisx = data[i*10][np.array([a for a in np.arange(0, n*3, 3)])]
+    thisy = data[i*10][np.array([a+1 for a in np.arange(0, n*3, 3)])]
 
     line.set_data(thisx, thisy)
     

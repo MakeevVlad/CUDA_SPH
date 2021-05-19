@@ -34,22 +34,17 @@ int main()
 {
 
 	Particle* ps = new Particle[N];
-	/*
-	for (size_t i = 0; i <5; ++i)
-		for (size_t j = 0; j < 5; ++j)
+	int p = sqrt(N);
+	for (size_t i = 0; i <p; ++i)
+		for (size_t j = 0; j < p; ++j)
 		{
-			ps[i * 5 + j].set_pos(i + 0.1, j + 4.1, 0);
-			ps[i * 5 + j].set_vel(0, 0, 0);
-			ps[i * 5 + j].set_ax(0, 0, 0);
+			ps[i * p + j].set_pos(i*1.1 - p/2 , j * 1.1 - p / 2, 0);
+			ps[i * p + j].set_vel(0, 0, 0);
+			ps[i * p + j].set_ax(0, 0, 0);
 		}
-		*/
-	ps[0].set_pos(0.5, 0, 0);
-	ps[0].set_vel(0, 0, 0);
-	ps[0].set_ax(0, 0, 0);
-	ps[1].set_pos(-0.5, 0, 0);
-	ps[1].set_vel(0, 0, 0);
-	ps[1].set_ax(0, 0, 0);
-	float dt = 0.01;
+		
+
+	float dt = 0.001;
 	size_t iterations = 10000;
 	size_t pts_number = N;
 	solver(ps, dt, iterations, pts_number);

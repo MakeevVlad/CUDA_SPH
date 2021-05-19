@@ -39,7 +39,7 @@ void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 	Kernel kernel(3);
 
 	std::ofstream file("test.txt");
-
+	std::ofstream fileax("testax.txt");
 	Particle* d_particle = device_particles_array(particle, pts_number);
 	
 
@@ -67,13 +67,19 @@ void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 					<< "interior time = " << it * dt << " s";
 			}
 			for (size_t p = 0; p < pts_number; ++p)
+			{
 				file << particle[p].pos[0] << " " << particle[p].pos[1] << " " << particle[p].pos[2] << " ";
+				fileax << particle[p].ax[0] << " " << particle[p].ax[1] << " " << particle[p].ax[2] << " ";
+			}
+
 			file << std::endl;
+			fileax << std::endl;
 		}
 
 	}
 
 	file.close();
+	fileax.close();
 
 
 }
@@ -87,7 +93,7 @@ __global__ void initParticles(Particle* particle, Kernel* kernel, Neighbour* nei
 	dens(n, particle, *kernel, *neighbour);
 
 
-
+	__syncthreads();
 	if (threadIdx.x == 0)
 	{
 		particle[n].pressure = press(n, particle, *kernel, *neighbour);
@@ -183,7 +189,7 @@ __device__ void dens(size_t n, Particle* particle, Kernel& kernel, Neighbour& ne
 		for (size_t c = 0; c < neighbour.nei_numbers[n]; ++c)
 			particle[n].density += res_dens[c];
 
-		//printf("%f \n", particle[n].density);
+
 	}
 }
 __device__ float press(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
@@ -216,11 +222,12 @@ __device__ void ax(size_t n, Particle* particle, Kernel& kernel, Neighbour& neig
 	__syncthreads();
 	if (i == 0)
 	{
-		particle[n].ax = vec3(0, 0, 0);
+		
 		for (size_t c = 0; c < neighbour.nei_numbers[n]; ++c)
 			particle[n].ax += res_ax[c];
 
-		particle[n].ax *= (-1) / particle[n].mass;
+		particle[n].ax /= particle[n].mass;
+		particle[n].ax *= -1;
 
 		
 	}

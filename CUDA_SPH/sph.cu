@@ -35,7 +35,7 @@ __device__ vec3 Kernel::gradW(vec3 r1, vec3 r2, float h)
 	}
 	else if (k > 1 && k <= 2)
 	{
-		return (r1 - r2) * C * 0.75 * powf(2 - k, 2) / (powf(h, D-1) * k);
+		return (r2 - r1) * C * 0.75 * powf(2 - k, 2) / (powf(h, D-1) * k);
 	}
 	else return vec3(0, 0, 0);
 }
