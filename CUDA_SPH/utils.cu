@@ -38,8 +38,8 @@ void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 	Neighbour neighbour(pts_number);
 	Kernel kernel(3);
 
-	std::ofstream file("test.txt");
-	std::ofstream fileax("testax.txt");
+	std::ofstream file("reftest.txt");
+	//std::ofstream fileax("testax.txt");
 	Particle* d_particle = device_particles_array(particle, pts_number);
 	
 
@@ -53,8 +53,8 @@ void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 		
 		axelerations<<<pts_number, pts_number >>>(d_particle, kernel.device(), neighbour.device());
 		
-		step << <pts_number, 3 >> > (d_particle, kernel.device(), neighbour.device(), dt);
-		
+		//step << <pts_number, 3 >> > (d_particle, kernel.device(), neighbour.device(), dt);
+		reflective_step <<<1, pts_number>>> (d_particle, kernel.device(), neighbour.device(), dt);
 		
 		if (it % 10 == 0)
 		{
@@ -69,17 +69,17 @@ void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 			for (size_t p = 0; p < pts_number; ++p)
 			{
 				file << particle[p].pos[0] << " " << particle[p].pos[1] << " " << particle[p].pos[2] << " ";
-				fileax << particle[p].ax[0] << " " << particle[p].ax[1] << " " << particle[p].ax[2] << " ";
+				//fileax << particle[p].ax[0] << " " << particle[p].ax[1] << " " << particle[p].ax[2] << " ";
 			}
 
 			file << std::endl;
-			fileax << std::endl;
+			//fileax << std::endl;
 		}
 
 	}
 
 	file.close();
-	fileax.close();
+	//fileax.close();
 
 
 }
@@ -157,7 +157,28 @@ __global__ void step(Particle* particle, Kernel* kernel, Neighbour* nei, float d
 
 }
 
+__global__ void reflective_step(Particle* particle, Kernel* kernel, Neighbour* nei, float dt)
+{
+	
+	size_t i = threadIdx.x;
 
+	particle[i].vel += particle[i].ax * dt;
+
+
+	float tr[3][3] = { {-10, 0, -10}, {10, 0, -10}, {0, 0, 10} };
+	point_t* trp = new point_t[3];
+	for (size_t c = 0; c < 3; ++c)
+	{
+		trp[c] = new coord_t[3];
+		for (size_t d = 0; d < 3; ++d)
+		{
+			trp[c][d] = tr[c][d];
+		}
+	}
+
+	reflect(dt, particle[i].pos.r, particle[i].vel.r, trp);
+
+}
 
 
 __device__ void dens(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)

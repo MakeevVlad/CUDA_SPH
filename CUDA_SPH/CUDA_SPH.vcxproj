@@ -82,6 +82,7 @@
     <CudaCompile Include="kernel.cu" />
     <CudaCompile Include="neighbour.cu" />
     <CudaCompile Include="particle.cu" />
+    <CudaCompile Include="reflection.cu" />
     <CudaCompile Include="sph.cu" />
     <CudaCompile Include="utils.cu" />
   </ItemGroup>
