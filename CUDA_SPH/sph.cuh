@@ -14,6 +14,7 @@ public:
 	double C = 0;
 
 	Kernel(size_t);
+	~Kernel();
 	Kernel* device()
 	{
 		return d_this;
@@ -24,4 +25,5 @@ public:
 	//Returns the value of gradient of smothing kernel gradW(r_1, r_2, h)
 	__device__ vec3 gradW(vec3, vec3, float);
 
+	__device__ float lapW(vec3, vec3, float);
 };

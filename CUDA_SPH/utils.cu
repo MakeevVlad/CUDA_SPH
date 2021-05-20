@@ -35,6 +35,11 @@ __global__ void tester2( Particle* particle)
 
 void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 {
+	int capture_rate = 10;
+	int initNeighbours_rate = 1;
+	int information_refresh_rate = 1000;
+
+
 	Neighbour neighbour(pts_number);
 	Kernel kernel(3);
 
@@ -42,25 +47,33 @@ void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 	//std::ofstream fileax("testax.txt");
 	Particle* d_particle = device_particles_array(particle, pts_number);
 	
+	//maximal quantity of neighbours
+	size_t mxn = 0;
+	size_t* d_mxn;
+	cudaMalloc((void**)&d_mxn, sizeof(size_t));
+	cudaMemcpy(d_mxn, &mxn, sizeof(size_t), cudaMemcpyHostToDevice);
 
 	for (size_t it = 0; it < iterations; ++it)
 	{
 
-		initNeighbour<<<pts_number, pts_number>>>(d_particle, neighbour.device());
-
-		initParticles<<<pts_number, pts_number>>>(d_particle, kernel.device(), neighbour.device(), it);
+		if (it % initNeighbours_rate == 0)
+		{
+			initNeighbour << <pts_number, pts_number >> > (d_particle, neighbour.device(), d_mxn);
+			//cudaMemcpy(&mxn, d_mxn, sizeof(size_t), cudaMemcpyDeviceToHost);
+		}
+		initParticles<<<pts_number, pts_number >>>(d_particle, kernel.device(), neighbour.device());
 		//tester2 << <1, 1 >> > (d_particle);
 		
 		axelerations<<<pts_number, pts_number >>>(d_particle, kernel.device(), neighbour.device());
 		
-		//step << <pts_number, 3 >> > (d_particle, kernel.device(), neighbour.device(), dt);
-		reflective_step <<<1, pts_number>>> (d_particle, kernel.device(), neighbour.device(), dt);
+		step << <pts_number, 3 >> > (d_particle, kernel.device(), neighbour.device(), dt);
+		//reflective_step <<<1, pts_number>>> (d_particle, kernel.device(), neighbour.device(), dt);
 		
-		if (it % 10 == 0)
+		if (it % capture_rate == 0)
 		{
 			cudaDeviceSynchronize();
 			update_particles(particle, d_particle, pts_number);
-			if (it % 1000 == 0)
+			if (it % information_refresh_rate == 0)
 			{
 				system("cls");
 				std::cout << "Progress: " << it * 100 / iterations << " % " << std::endl
@@ -81,11 +94,12 @@ void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 	file.close();
 	//fileax.close();
 
+	cudaFree(d_particle);
 
 }
 
 
-__global__ void initParticles(Particle* particle, Kernel* kernel, Neighbour* neighbour, size_t it)
+__global__ void initParticles(Particle* particle, Kernel* kernel, Neighbour* neighbour)
 {
 	//printf("HERE %d \n", it);
 	int n = blockIdx.x;
@@ -127,33 +141,25 @@ __global__ void step(Particle* particle, Kernel* kernel, Neighbour* nei, float d
 	{
 		particle[i].vel[j] += particle[i].ax[j] * dt;
 		particle[i].pos[j] += particle[i].vel[j] * dt;
+
+
+
+		//Fixme: Delete this after the addition of meshes:
+		
+		//__syncthreads();
+		
+
+
+			if (particle[i].pos[j] > 20 || particle[i].pos[j] < -20)
+			{
+				particle[i].vel[j] *= -1 * 0.9;
+				particle[i].pos[j] += particle[i].vel[j] * dt;
+			}
+			
+
+
+
 	}
-	
-
-	//Fixme: Delete this after the addition of meshes:
-	/*
-	__syncthreads();
-	size_t a = 0;
-	while (bounds(particle[i].pos))
-	{
-		if (a > 5)
-		{
-			printf("Loop ");
-			break;
-		}
-
-		if (particle[i].pos[0] > 11 || particle[i].pos[0] < -1)
-		{
-			particle[i].vel[0] *= -1;
-			particle[i].pos[0] += particle[i].vel[0] * dt;
-		}
-		if (particle[i].pos[1] > 11 || particle[i].pos[1] < -1)
-		{
-			particle[i].vel[1] *= -1;
-			particle[i].pos[1] += particle[i].vel[1] * dt;
-		}
-		a++;
-	}*/
 
 }
 
@@ -165,7 +171,7 @@ __global__ void reflective_step(Particle* particle, Kernel* kernel, Neighbour* n
 	particle[i].vel += particle[i].ax * dt;
 
 
-	float tr[3][3] = { {-10, 0, -10}, {10, 0, -10}, {0, 0, 10} };
+	float tr[3][3] = { {-50, -20, -10}, {50, -20, -10}, {0, -20, 10} };
 	point_t* trp = new point_t[3];
 	for (size_t c = 0; c < 3; ++c)
 	{
@@ -178,6 +184,12 @@ __global__ void reflective_step(Particle* particle, Kernel* kernel, Neighbour* n
 
 	reflect(dt, particle[i].pos.r, particle[i].vel.r, trp);
 
+	for (size_t c = 0; c < 3; ++c)
+	{
+		delete[] trp[c];
+	}
+
+	delete[] trp;
 }
 
 
@@ -215,7 +227,10 @@ __device__ void dens(size_t n, Particle* particle, Kernel& kernel, Neighbour& ne
 }
 __device__ float press(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
 {
-	return particle[n].A * powf(particle[n].density, particle[n].gamma);
+	//return particle[n].A * powf(particle[n].density, particle[n].gamma);
+
+
+	return particle[n].k * (particle[n].density - particle[n].rho0);
 }
 
 
@@ -224,7 +239,7 @@ __device__ float press(size_t n, Particle* particle, Kernel& kernel, Neighbour& 
 __device__ void ax(size_t n, Particle* particle, Kernel& kernel, Neighbour& neighbour)
 {
 	//printf("HERE\n");
-
+	vec3 g(0, -2, 0);
 	int i = threadIdx.x;
 
 	__shared__ vec3 res_ax[N];
@@ -235,9 +250,13 @@ __device__ void ax(size_t n, Particle* particle, Kernel& kernel, Neighbour& neig
 
 		int j = neighbour.neighbour[n * neighbour.n + i];
 		if (j != n)
-			res_ax[i] = kernel.gradW(particle[n].pos, particle[j].pos, particle[n].h) *(particle[n].pressure / (particle[n].density * particle[n].density) +
-			particle[j].pressure / (particle[j].density * particle[j].density)) * particle[j].mass;
-
+		{
+			res_ax[i] =  kernel.gradW(particle[n].pos, particle[j].pos, particle[n].h) * (-1) * (particle[n].pressure / (particle[n].density * particle[n].density) +
+				particle[j].pressure / (particle[j].density * particle[j].density)) * particle[j].mass;
+			res_ax[i] += (particle[j].vel - particle[n].vel) * particle[n].nu *
+				kernel.lapW(particle[n].vel, particle[j].vel, particle[n].h) * particle[j].mass / particle[j].density;
+			res_ax[i] += g;
+		}
 	}
 
 	__syncthreads();
@@ -246,13 +265,9 @@ __device__ void ax(size_t n, Particle* particle, Kernel& kernel, Neighbour& neig
 		
 		for (size_t c = 0; c < neighbour.nei_numbers[n]; ++c)
 			particle[n].ax += res_ax[c];
-
-		particle[n].ax /= particle[n].mass;
-		particle[n].ax *= -1;
-
-		
 	}
 }
+
 
 
 

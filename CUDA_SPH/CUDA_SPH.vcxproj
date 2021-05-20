@@ -89,6 +89,7 @@
   <ItemGroup>
     <ClInclude Include="cuda_vector_math.cuh" />
     <ClInclude Include="info.cuh" />
+    <ClInclude Include="mesh\reflection.cuh" />
     <ClInclude Include="neighbour.cuh" />
     <ClInclude Include="particle.cuh" />
     <ClInclude Include="sph.cuh" />

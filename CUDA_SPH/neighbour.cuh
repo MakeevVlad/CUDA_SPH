@@ -12,6 +12,7 @@ public:
 	//Must not be used on host!
 	size_t* nei_numbers;
 
+	size_t* max_neighbours;
 	size_t n;
 
 
@@ -21,6 +22,7 @@ public:
 	Neighbour(size_t);
 	Neighbour() {};
 
+	~Neighbour();
 	Neighbour* device()
 	{
 		return d_this;
@@ -36,6 +38,6 @@ public:
 };
 
 ///Should be called with <<<N, N>>>
-__global__ void initNeighbour(Particle*, Neighbour*);
+__global__ void initNeighbour(Particle*, Neighbour*, size_t*);
 
 __device__ bool nei(Particle*, Particle*);

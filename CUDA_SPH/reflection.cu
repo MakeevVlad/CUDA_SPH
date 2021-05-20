@@ -5,8 +5,8 @@
 
 // Includes
 #include "info.cuh"
-#include "reflection.cuh"
 #include "cuda_vector_math.cuh"
+#include "reflection.cuh"
 
 __device__
 void vector(point_t p, vector_t result) {
@@ -188,6 +188,7 @@ void reflect(timestep_t dt, point_t x, vector_t v, point_t* tr) {
       vector(n, n_tmp);
       mult(n_tmp, 2*dot(v, n));
       subtract(v, n_tmp);
+      mult(v, 0.9);
 
       delete[] dx2;
       delete[] n_tmp;

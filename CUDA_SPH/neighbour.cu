@@ -39,8 +39,15 @@ Neighbour::Neighbour(size_t _n)
 	//
 	//cudaMemcpy(&(d_this->matrix), &matrix, sizeof(int*), cudaMemcpyHostToDevice);
 
+	delete[] neighbour_tmp;
+	delete[] nei_numbers_tmp;
 }
-
+Neighbour::~Neighbour()
+{
+	cudaFree(neighbour);
+	cudaFree(nei_numbers);
+	cudaFree(d_this);
+}
 __device__ size_t Neighbour::NeigboursNumber(size_t i)
 {
 	return nei_numbers[i];
@@ -51,7 +58,7 @@ __device__ size_t* Neighbour::getNeighbours(size_t i)
 	return neighbour + n*i;
 }
 
-__global__ void initNeighbour(Particle* pts, Neighbour* nei)
+__global__ void initNeighbour(Particle* pts, Neighbour* nei, size_t* mxn)
 {
 	int i = blockIdx.x;
 	int j = threadIdx.x;
@@ -62,7 +69,9 @@ __global__ void initNeighbour(Particle* pts, Neighbour* nei)
 	
 	if (i < nei->n && j < nei->n)
 	{
-		
+		if (j == 0)
+			atomicExch(mxn, 0);
+
 		if ((pts[i].pos - pts[j].pos).abssquared() < 4 * pts[i].h * pts[i].h)
 		{
 			//printf("%f %f \n", (pts[i].pos - pts[j].pos).abssquared(), pts[i].h);
@@ -84,6 +93,8 @@ __global__ void initNeighbour(Particle* pts, Neighbour* nei)
 					++nei->nei_numbers[i];
 				}
 			}
+
+			atomicMax(mxn, nei->nei_numbers[i]);
 		}
 	}
 }

@@ -65,6 +65,8 @@ public:
 	
 	__host__ __device__
 	real_t projection(const vec3&); //Not checked!!!
+	__host__ __device__
+		vec3 normalize();
 
 };
 
