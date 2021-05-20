@@ -233,7 +233,9 @@ void reflect(timestep_t dt, vec3& x, vec3& v, vec3* tr) {
   vec3 r13 = tr[2] - tr[0];
   vec3 n = cross(r12, r13).normalize();
   real_t D = (-1) * (n * r1);
-  mu = -(D + n*x) / (n*dp);
+  real_t mu = -(D + n*x) / (n*dp);
+  vec3 p = 0;
+  vec3 dx2 = 0;
 
   if((mu > 0) && (mu < 1)) {
     // Reflection may occur => step 2 - check is p on triangle
@@ -272,26 +274,27 @@ vec3 vec3_from_point(point_t x) {
 };
 
 
+/*
 // Evaluate distance between point x and triangle tr
 __device__
 real_t distance(point_t x, point_t* tr) {
   vec3 p = vec3_from_point(x);
   vec3 trs[3];
-  vec3 trs[0] = vec3_from_point(tr[0]);
-  vec3 trs[1] = vec3_from_point(tr[1]);
-  vec3 trs[2] = vec3_from_point(tr[2]);
+  trs[0] = vec3_from_point(tr[0]);
+  trs[1] = vec3_from_point(tr[1]);
+  trs[2] = vec3_from_point(tr[2]);
   return distance(p, trs);
 };
  
 
 // Normal types
 __device__
-real_t distance(const vec3& p, const point_t* const tr) {
+real_t distance(const vec3& p, const vec3* const tr) {
   vec3 t1 = tr[0];
   vec3 t2 = tr[1];
   vec3 t3 = tr[2];
   vec3 n = cross(t2-t1, t3-t1).normalize();
-  vec3 proj = p - n*(t1-p);
+  vec3 proj = p -  n*(t1-p);
   // baricentric coords proj = t1*u + t2*v + t3*w
   // perform
   // proj-t3 -> prroj
@@ -333,3 +336,4 @@ real_t distance(const vec3& p, const point_t* const tr) {
 
   return abs(p - (t1*u + t2*v + t3*w));
 };
+*/
