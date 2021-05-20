@@ -1,8 +1,9 @@
 #ifndef REFLECTION_CUH
 #define REFLECTION_CUH
-
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
 // Includes
-#include "info.cuh"
+#include "../info.cuh"
 # define M_PI 3.14159265358979323846 // pi
 
 // Typedefs
@@ -73,7 +74,7 @@ namespace v_math{
   void normalize(vector_t v);
 };
 
-const real_t EPS = 1e-12; // TODO : need to be adjjusted!!!
+__device__ const real_t EPS = 1e-6; // TODO : need to be adjjusted!!!
 
 
 // Perform the time step dt for free particle at point x with velocity v
