@@ -60,13 +60,11 @@ public:
 	real_t abs() const;
 	__host__ __device__
 	real_t abssquared() const;
-	__host__ __device__
-	void normalize();
 	
 	__host__ __device__
 	real_t projection(const vec3&); //Not checked!!!
 	__host__ __device__
-		vec3 normalize();
+		vec3& normalize();
 
 };
 
