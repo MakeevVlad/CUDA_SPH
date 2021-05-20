@@ -45,7 +45,6 @@ int main()
 			ps[i * p + j].set_vel(0, 0, 0);
 			ps[i * p + j].set_ax(0, 0, 0);
 		}
-<<<<<<< HEAD
 	size_t pts_number = N;
 
 	/* Generating from mesh */
@@ -60,9 +59,6 @@ int main()
 	};
 	*/
 
-=======
-		
->>>>>>> 90a6f2060556e1c663bb67cccc9afd6e24356003
 
 	float dt = 0.001;
 	size_t iterations = 10000;
