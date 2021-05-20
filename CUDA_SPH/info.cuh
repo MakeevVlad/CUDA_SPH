@@ -3,7 +3,7 @@
 
 using real_t = float;
 
-#define N 1024
+#define N 400
 
 
 #endif

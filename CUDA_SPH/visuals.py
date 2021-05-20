@@ -14,7 +14,7 @@ def dotstoimage(thisx, thisy):
 
 fig = plt.figure(figsize=(5, 4))
 a = 40
-n = 1024
+n = 400
 ax = fig.add_subplot(111, autoscale_on=False, xlim=(-a, a), ylim=(-a, a))
 ax.set_aspect('equal')
 ax.grid()

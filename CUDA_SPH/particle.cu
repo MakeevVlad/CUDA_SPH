@@ -4,15 +4,15 @@
 
 Particle::Particle()
 {
-	mass = 5;
+	mass = 1;
 	density = 1;
 	pressure = 1;
 	h = 1;
 	gamma = 1;
 	A = 10;
-	nu = 1000;
-	rho0 = 1;
-	k = 6;
+	nu = 10000;
+	rho0 = 0.75;
+	k = 100;
 	this->set_pos(0, 0, 0);
 	this->set_vel(0, 0, 0);
 	this->set_ax(0, 0, 0);
