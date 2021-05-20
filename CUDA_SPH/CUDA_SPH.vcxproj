@@ -89,11 +89,15 @@
   <ItemGroup>
     <ClInclude Include="cuda_vector_math.cuh" />
     <ClInclude Include="info.cuh" />
-    <ClInclude Include="mesh\reflection.cuh" />
+    <ClInclude Include="mesh\primitives.h" />
     <ClInclude Include="neighbour.cuh" />
     <ClInclude Include="particle.cuh" />
+    <ClInclude Include="reflection.cuh" />
     <ClInclude Include="sph.cuh" />
     <ClInclude Include="utils.cuh" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="mesh\primitives.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -272,7 +272,7 @@ vec3 vec3_from_point(point_t x) {
 };
 
 
-/*
+
 // Evaluate distance between point x and triangle tr
 __device__
 real_t distance(point_t x, point_t* tr) {
@@ -283,11 +283,16 @@ real_t distance(point_t x, point_t* tr) {
   trs[2] = vec3_from_point(tr[2]);
   return distance(p, trs);
 };
- 
-
+__device__
+  real_t clamp01(real_t t) 
+  {
+    if(t < 0) { return 0; };
+    if(t > 1) { return 1; };
+    return t;
+  };
 // Normal types
 __device__
-real_t distance(const vec3& p, const vec3* const tr) {
+real_t distance(const vec3& p, const vec3  tr[3]) {
   vec3 t1 = tr[0];
   vec3 t2 = tr[1];
   vec3 t3 = tr[2];
@@ -312,11 +317,7 @@ real_t distance(const vec3& p, const vec3* const tr) {
   real_t w = 1 - u - v;
     //if((u >= 0) && (u <= 1) && (v >= 0) && (v <= 1) && (w >= 0) && (w <= 1)) {
 
-  real_t clamp01(real_t t) {
-    if(t < 0) { return 0; };
-    if(t > 1) { return 1; };
-    return t;
-  };
+
 
   if(u < 0) {
     vec3 tmp = t3p-t2p;
@@ -337,4 +338,3 @@ real_t distance(const vec3& p, const vec3* const tr) {
 
   return abs(p - (t1*u + t2*v + t3*w));
 };
-*/

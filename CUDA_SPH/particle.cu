@@ -10,9 +10,10 @@ Particle::Particle()
 	h = 1;
 	gamma = 1;
 	A = 10;
-	nu = 10000;
-	rho0 = 0.75;
-	k = 100;
+
+	nu = 1000;
+	rho0 = 0.5;
+	k = 1;
 	this->set_pos(0, 0, 0);
 	this->set_vel(0, 0, 0);
 	this->set_ax(0, 0, 0);

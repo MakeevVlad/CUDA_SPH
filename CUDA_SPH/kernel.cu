@@ -35,23 +35,29 @@ __global__ void tester1()
 
 int main()
 {
-
+	
 	Particle* ps = new Particle[N];
-	int p = sqrt(N);
+	int p = 10; // sqrt(N);
+
 	for (size_t i = 0; i <p; ++i)
 		for (size_t j = 0; j < p; ++j)
-		{
-			ps[i * p + j].set_pos(i*1.1 - p/2 , j * 1.1 - p / 2, 0);
-			ps[i * p + j].set_vel(0, 0, 0);
-			ps[i * p + j].set_ax(0, 0, 0);
-		}
+			for(size_t k = 0; k < p; ++k)
+			{
+				ps[i * p * p + j * p + k].set_pos(i * 1.1 - p / 2, j * 1.1 - p / 2, k * 1.1 - p / 2);
+				ps[i *  p * p + j * p + k].set_vel(0, 0, 0);
+				ps[i *  p * p + j * p + k].set_ax(0, 0, 0);
+			}
 	size_t pts_number = N;
 
+	
 	/* Generating from mesh */
-	/* VolumeMesh mesh;
-	mesh.construct_from_file("input.msh", "materials.mat");
+	/*
+	VolumeMesh mesh;
+	mesh.construct_from_file("scene/input.msh", "scene/materials.mat");
 	size_t pts_number = mesh.get_tetrahedra_number();
 
+	std::cout << pts_number;
+	
 	// init masses and poses
 	Particle* ps = new Particle[pts_number];
 	for(size_t i = 0; i < pts_number; ++i) {
@@ -60,7 +66,7 @@ int main()
 	*/
 
 
-	float dt = 0.001;
+	float dt = 0.0005;
 	size_t iterations = 10000;
 	solver(ps, dt, iterations, pts_number);
 

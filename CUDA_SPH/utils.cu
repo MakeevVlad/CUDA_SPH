@@ -20,6 +20,8 @@ __global__ void tester(Neighbour* nei)
 	}
 	
 }
+
+
 __global__ void tester2( Particle* particle)
 {
 	printf("Tester:\n");
@@ -36,14 +38,14 @@ __global__ void tester2( Particle* particle)
 void solver(Particle* particle, float dt, size_t iterations, size_t pts_number)
 {
 	int capture_rate = 10;
-	int initNeighbours_rate = 1;
+	int initNeighbours_rate = 5;
 	int information_refresh_rate = 1000;
 
 
 	Neighbour neighbour(pts_number);
 	Kernel kernel(3);
 
-	std::ofstream file("reftest.txt");
+	std::ofstream file("results/data/result3drop.txt");
 	//std::ofstream fileax("testax.txt");
 	Particle* d_particle = device_particles_array(particle, pts_number);
 	
@@ -123,11 +125,6 @@ __global__ void axelerations(Particle* particle, Kernel* kernel, Neighbour* nei)
 	ax(i, particle, *kernel, *nei);
 }
 
-__device__ bool bounds(vec3 pos)
-{
-	return ((pos[0] > 11) || (pos[0] < -1) || (pos[1] > 11) || (pos[1] < -1));
-}
-
 
 
 __global__ void step(Particle* particle, Kernel* kernel, Neighbour* nei, float dt)
@@ -150,13 +147,12 @@ __global__ void step(Particle* particle, Kernel* kernel, Neighbour* nei, float d
 		
 
 
-			if (particle[i].pos[j] > 20 || particle[i].pos[j] < -20)
+			if (particle[i].pos[j] > cubeSize || particle[i].pos[j] < -cubeSize)
 			{
-				particle[i].vel[j] *= -1 * 0.9;
+				particle[i].vel[j] *= -1 * 0.6;
 				particle[i].pos[j] += particle[i].vel[j] * dt;
 			}
 			
-
 
 
 	}
@@ -221,7 +217,7 @@ __device__ void dens(size_t n, Particle* particle, Kernel& kernel, Neighbour& ne
 		particle[n].density = 0;
 		for (size_t c = 0; c < neighbour.nei_numbers[n]; ++c)
 			particle[n].density += res_dens[c];
-
+		//printf("%f \n", particle[n].density);
 
 	}
 }

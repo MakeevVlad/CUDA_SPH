@@ -5,7 +5,7 @@
 #include "particle.cuh"
 #include "neighbour.cuh"
 #include "sph.cuh"
-#include "mesh/reflection.cuh"
+#include "reflection.cuh"
 void solver(Particle*, float, size_t, size_t);
 
 __device__ void eiler_scheme(Particle*, Kernel&, double, size_t);

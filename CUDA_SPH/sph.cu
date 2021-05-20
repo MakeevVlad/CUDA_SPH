@@ -12,6 +12,7 @@ Kernel::Kernel(size_t D_)
 	cudaMemcpy(d_this, this, sizeof(Kernel), cudaMemcpyHostToDevice);
 }
 
+
 Kernel::~Kernel()
 {
 	cudaFree(d_this);

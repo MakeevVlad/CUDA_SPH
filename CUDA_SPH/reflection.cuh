@@ -74,7 +74,7 @@ namespace v_math{
   void normalize(vector_t v);
 };
 
-const real_t EPS = 1e-12; // TODO : need to be adjjusted!!!
+__device__ const real_t EPS = 1e-12; // TODO : need to be adjjusted!!!
 
 
 // Perform the time step dt for free particle at point x with velocity v
@@ -96,6 +96,6 @@ __device__
 real_t distance(point_t x, point_t* tr);
 
 __device__
-real_t distance(const vec3& p, const point_t* const tr);
+real_t distance(const vec3& p, const vec3  tr[3]);
 
 #endif
