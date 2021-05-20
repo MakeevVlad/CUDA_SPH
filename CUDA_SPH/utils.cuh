@@ -5,11 +5,12 @@
 #include "particle.cuh"
 #include "neighbour.cuh"
 #include "sph.cuh"
-
+#include "reflection.cu"
 void solver(Particle*, float, size_t, size_t);
 
 __device__ void eiler_scheme(Particle*, Kernel&, double, size_t);
 
+__global__ void reflective_step(Particle* particle, Kernel* kernel, Neighbour* nei, float dt);
 __global__ void step(Particle*, Kernel*, Neighbour*,  float);
 __global__ void axelerations(Particle*, Kernel*, Neighbour*);
 
@@ -38,4 +39,4 @@ __device__ float scalar_prod(float*, float*);
 
 
 //Should be called with <<<N, maxNeighbours>>>
-__global__ void initParticles(Particle*, Kernel*, Neighbour*);
+__global__ void initParticles(Particle*, Kernel*, Neighbour*, size_t);

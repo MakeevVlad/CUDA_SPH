@@ -52,6 +52,7 @@ public:
 
 	//Will fetch mass
 	float get_mass();
+	float get_dens();
 
 	//Will fetch q_i coordinate (q, i)
 	float get_pos_i(int);
@@ -63,6 +64,7 @@ public:
 
 };
 
+void update_particles(Particle* ps, Particle* d_ps, size_t ps_num);
 
 //Must be called after creatin an array of particles to send them to GPU
 Particle* device_particles_array(Particle*, size_t);
