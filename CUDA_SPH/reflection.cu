@@ -289,7 +289,7 @@ real_t distance(const vec3& p, const point_t* const tr) {
   vec3 t2 = tr[1];
   vec3 t3 = tr[2];
   vec3 n = cross(t2-t1, t3-t1).normalize();
-  vec3 proj = p - n*(t1-p);
+  vec3 proj = p - n * (n*(t1-p));
   // baricentric coords proj = t1*u + t2*v + t3*w
   // perform
   // proj-t3 -> prroj
@@ -298,6 +298,7 @@ real_t distance(const vec3& p, const point_t* const tr) {
   // so proj = u*t1 + v * t2
   vec3 t1p = t1 - t3;
   vec3 t2p = t2 - t3;
+  vec3 t3p = t3 - t3;
   proj = proj - t3;
   vec3 t1_r = cross(t1p,n).normalize();
   vec3 t2_r = cross(t2p,n).normalize();
