@@ -12,6 +12,12 @@ Kernel::Kernel(size_t D_)
 	cudaMemcpy(d_this, this, sizeof(Kernel), cudaMemcpyHostToDevice);
 }
 
+Kernel::~Kernel()
+{
+	cudaFree(d_this);
+}
+
+
 __device__ float Kernel::W(vec3 r1, vec3 r2, float h)
 {
 	float k = abs(r1 - r2) / h;
@@ -31,11 +37,26 @@ __device__ vec3 Kernel::gradW(vec3 r1, vec3 r2, float h)
 	double k = abs(r1 - r2) / h;
 	if (k <= 1)
 	{
-		return (r1 - r2) * C * (-3 * k + 2.25 * powf(k, 2)) / (powf(h, D-1) * k);
+		return (r1 - r2) * C * (-3 * k + 2.25 * powf(k, 2)) / (powf(h, D+1) * k);
 	}
 	else if (k > 1 && k <= 2)
 	{
-		return (r2 - r1) * C * 0.75 * powf(2 - k, 2) / (powf(h, D-1) * k);
+		return (r2 - r1) * C * 0.75 * powf(2 - k, 2) / (powf(h, D+1) * k);
 	}
 	else return vec3(0, 0, 0);
+}
+
+
+__device__ float Kernel::lapW(vec3 r1, vec3 r2, float h)
+{
+	double k = abs(r1 - r2) / h;
+	if (k <= 1)
+	{
+		return  C * (-1 + k) * 9 / (powf(h, D + 1));
+	}
+	else if (k > 1 && k <= 2)
+	{
+		return C * (-0.75) * (2 - k) * (4 - 3 * k)  / (powf(h, D + 1) * k);
+	}
+	else return 0;
 }

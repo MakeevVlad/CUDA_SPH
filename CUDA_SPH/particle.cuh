@@ -19,12 +19,16 @@ public:
 	float mass; //Mass and radius
 	//float energy;
 
+	float k;
+	float rho0;
+
 	float density;
 	float pressure;
 
 	float h; //Smooth radius
 	float gamma;
 	float A; //Const dep on env
+	float nu; //viscosity
 
 	Particle();
 	void allocate();

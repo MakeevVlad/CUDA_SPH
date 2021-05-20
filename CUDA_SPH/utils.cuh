@@ -5,7 +5,7 @@
 #include "particle.cuh"
 #include "neighbour.cuh"
 #include "sph.cuh"
-#include "reflection.cu"
+#include "mesh/reflection.cuh"
 void solver(Particle*, float, size_t, size_t);
 
 __device__ void eiler_scheme(Particle*, Kernel&, double, size_t);
@@ -34,9 +34,10 @@ __device__ float gamma(size_t, Particle*, Kernel&);
 __device__ float  divVel(size_t, Particle*, Kernel&);
 __device__ vec3	rotVel(size_t, Particle*, Kernel&);
 
+__device__ vec3 lapVel(size_t, Particle*, Kernel&);
 
 __device__ float scalar_prod(float*, float*);
 
 
 //Should be called with <<<N, maxNeighbours>>>
-__global__ void initParticles(Particle*, Kernel*, Neighbour*, size_t);
+__global__ void initParticles(Particle*, Kernel*, Neighbour*);
