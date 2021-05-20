@@ -1,3 +1,4 @@
+
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <iostream>
@@ -5,8 +6,10 @@
 #include "sph.cuh"
 #include "particle.cuh"
 #include "utils.cuh"
+
 //#include "neighbour.cuh"
 
+#include "mesh/primitives.h"
 
 
 __global__ void test(Particle* p)
@@ -27,7 +30,7 @@ __global__ void tester1()
 		printf("\n");
 	}*/
 
-}
+};
 
 
 int main()
@@ -42,11 +45,23 @@ int main()
 			ps[i * p + j].set_vel(0, 0, 0);
 			ps[i * p + j].set_ax(0, 0, 0);
 		}
-		
+	size_t pts_number = N;
+
+	/* Generating from mesh */
+	/* VolumeMesh mesh;
+	mesh.construct_from_file("input.msh", "materials.mat");
+	size_t pts_number = mesh.get_tetrahedra_number();
+
+	// init masses and poses
+	Particle* ps = new Particle[pts_number];
+	for(size_t i = 0; i < pts_number; ++i) {
+		mesh.initialize_particle(&(ps[i]), i);
+	};
+	*/
+
 
 	float dt = 0.001;
 	size_t iterations = 10000;
-	size_t pts_number = N;
 	solver(ps, dt, iterations, pts_number);
 
 
